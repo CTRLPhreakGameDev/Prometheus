@@ -1,0 +1,9 @@
+#include "core/input/input.hpp"
+#include "raylib.h"
+
+void Input::Update() {
+    left_  = IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT);
+    right_ = IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT);
+    up_    = IsKeyDown(KEY_W) || IsKeyDown(KEY_UP);
+    down_  = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
+}
