@@ -43,4 +43,5 @@
 build/
 CMakeFiles/
 CMakeCache.txt
+CMakeLists.txt
 compile_commands.json

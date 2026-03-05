@@ -1,5 +1,7 @@
 #include "core/game.hpp"
 
+#include <vector>
+
 void Game::Run() {
     InitWindow(800, 450, "game");
     SetTargetFPS(60);
@@ -27,14 +29,19 @@ void Game::Run() {
 }
 
 void Game::Update(float dt) {
-    player_.Update(input_, dt);
+    player_.Update(input_, dt, walls_);
     camFollow_.Update(camera_, player_.Pos(), dt);
 }
 
 void Game::Draw() {
     BeginMode2D(camera_);
+
+    for (const Rectangle& r : walls_)
+    {
+        DrawRectangleLinesEx(r, 1, DARKDRAY);
+    }
     player_.Draw();
-    DrawGrid(50, 32);
+
     EndMode2D();
 
     DrawText("WASD to move", 10, 10, 20, RAYWHITE);

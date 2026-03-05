@@ -1,12 +1,15 @@
 #pragma once
+
 #include "raylib.h"
+#include "raymath.h"
 #include "core/input/input.hpp"
+#include <vector>
 
 class Player {
 public:
     explicit Player(Vector2 startPos) : pos_(startPos) {}
 
-    void Update(const Input& input, float dt);
+    void Update(const Input& input, float dt, const std::vector<Rectangle>& walls);
     void Draw() const;
 
     Vector2 Pos() const { return pos_; }
