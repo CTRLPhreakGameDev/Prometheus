@@ -42,6 +42,7 @@
 
 build/
 CMakeFiles/
+.idea/
 CMakeCache.txt
 CMakeLists.txt
 compile_commands.json
