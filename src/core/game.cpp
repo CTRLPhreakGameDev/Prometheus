@@ -1,7 +1,5 @@
 #include "core/game.hpp"
 
-#include <vector>
-
 void Game::Run() {
     InitWindow(800, 450, "game");
     SetTargetFPS(60);
@@ -31,6 +29,7 @@ void Game::Run() {
 void Game::Update(float dt) {
     player_.Update(input_, dt, walls_);
     camFollow_.Update(camera_, player_.Pos(), dt);
+    enemy.Update(player_.Pos(), dt, walls_);
 }
 
 void Game::Draw() {
@@ -38,9 +37,10 @@ void Game::Draw() {
 
     for (const Rectangle& r : walls_)
     {
-        DrawRectangleLinesEx(r, 1, DARKDRAY);
+        DrawRectangleLinesEx(r, 1, DARKGRAY);
     }
     player_.Draw();
+    enemy.Draw();
 
     EndMode2D();
 

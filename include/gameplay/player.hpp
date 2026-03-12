@@ -16,7 +16,7 @@ public:
 
     Rectangle Hitbox() const
     {
-	    return {pos_.x -10, pos_.y -10, 20, 20 };
+	    return { pos_.x -10, pos_.y -10, 20, 20 };
     }
 
 private:

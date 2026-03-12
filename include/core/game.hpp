@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "core/input/input.hpp"
 #include "gameplay/player.hpp"
+#include "gameplay/enemies/common.hpp"
 #include "gfx/cameraFollow.hpp"
 #include <vector>
 
@@ -19,6 +20,7 @@ private:
 
     Input input_{};
     Player player_{ { 0.0f, 0.0f } };
+    Enemy enemy{{ 900.0f, 500.0f }, 120.0f, 18.0f};
 
     std::vector<Rectangle> walls_ = {
         { 100, 200, 300, 30 },
