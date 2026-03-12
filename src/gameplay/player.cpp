@@ -46,5 +46,5 @@ void Player::Update(const Input& input, float dt, const std::vector<Rectangle>& 
 }
 
 void Player::Draw() const {
-    DrawRectangleV({pos_.x - 10, pos_.y - 10}, {20, 20}, RED);
+    DrawRectangleV({pos_.x - 10, pos_.y - 10}, {20, 20}, BLUE);
 }

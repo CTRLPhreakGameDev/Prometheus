@@ -26,6 +26,6 @@ struct Enemy
 
 	Rectangle Hitbox() const
 	{
-		return { position.x - radius, position.y - radius, 20, 20 };
+		return { position.x - radius, position.y - radius, radius * 2, radius * 2 };
 	}
 };

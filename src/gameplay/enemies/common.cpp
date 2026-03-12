@@ -24,7 +24,6 @@ Enemy::Enemy(Vector2 startPos, float moveSpeed, float size)
 Vector2 Enemy::GetDirectionToPlayer(Vector2 playerPos) const
 {
 	Vector2 toPlayer = { playerPos.x - position.x, playerPos.y - position.y };
-
 	return NormalizeSafe(toPlayer);
 }
 
@@ -34,51 +33,49 @@ void Enemy::Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& wa
 		return;
 
 	Vector2 toPlayer = { playerPos.x - position.x, playerPos.y - position.y };
-	Rectangle hb {Hitbox()};
-
 	float distance {VectorLengthCustom(toPlayer)};
 	Vector2 dir {GetDirectionToPlayer(playerPos)};
 
 	float stopDistance {24.0f};
+
+	float dx = 0.0f;
+	float dy = 0.0f;
+
 	if (distance > stopDistance)
 	{
-		position.x += dir.x * speed * dt;
-		position.y += dir.y * speed * dt;
+		dx = dir.x * speed * dt;
+		dy = dir.y * speed * dt;
 	}
-	
-	hb = Hitbox();
+
+	// --- X axis ---
+	position.x += dx;
+	Rectangle hb = Hitbox();
 
 	for (const Rectangle& w : walls)
 	{
 		if (CheckCollisionRecs(hb, w))
 		{
-			if (position.x > 0)
-			{
+			if (dx > 0)
 				position.x = w.x - hb.width / 2;
-			}
-			else 
-			{
+			else
 				position.x = (w.x + w.width) + hb.width / 2;
-			}
-
 			hb = Hitbox();
 		}
 	}
 
+	// --- Y axis ---
+	position.y += dy;
 	hb = Hitbox();
 
 	for (const Rectangle& w : walls)
 	{
 		if (CheckCollisionRecs(hb, w))
 		{
-			if (position.y > 0)
-			{
+			if (dy > 0)
 				position.y = w.y - hb.height / 2;
-			}
-			else 
-			{
+			else
 				position.y = (w.y + w.height) + hb.height / 2;
-			}
+			hb = Hitbox();
 		}
 	}
 
@@ -97,6 +94,6 @@ void Enemy::Draw() const
 	if (!active)
 		return;
 
-	DrawCircleV(position, radius, RED);
+	DrawCircleV(position, radius, PURPLE);
 	DrawCircleLines((int)position.x, (int)position.y, shootRange, Fade(DARKPURPLE, 0.15f));
 }
