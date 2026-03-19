@@ -30,7 +30,7 @@ add_executable(game
   src/gameplay/player.cpp
   src/gameplay/enemies/common.cpp
   src/gfx/cameraFollow.cpp
-        src/gameplay/bullet/Bullet.cpp
+  src/gameplay/bullet/bullet.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
