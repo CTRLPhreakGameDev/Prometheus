@@ -9,32 +9,42 @@
 #include "raylib.h"
 #include <vector>
 
+enum class GameState
+{
+	Playing,
+	GameOver,
+};
+
 class Game {
-public:
-  void Run();
+	public:
+  		void Run();
 
-private:
-  void Update(float dt);
-  void Draw();
+	private:
+  		void Update(float dt);
+  		void Draw();
+		void Reset();
 
-  Vector2 GetMouseWorldPos() const;
+  		Vector2 GetMouseWorldPos() const;
 
-  RenderTexture2D target_;
-  static constexpr int kRenderW = 800;
-  static constexpr int kRenderH = 450;
+  		RenderTexture2D target_;
+  		static constexpr int kRenderW = 800;
+  		static constexpr int kRenderH = 450;
 
-  Camera2D camera_{};
-  CameraFollow camFollow_{};
+  		Camera2D camera_{};
+  		CameraFollow camFollow_{};
 
-  Input input_{};
-  Player player_{{0.0f, 0.0f}};
-  Enemy enemy{{900.0f, 500.0f}, 120.0f, 18.0f};
+  		Input input_{};
+  		Player player_{{0.0f, 0.0f}};
+		std::vector<Enemy> enemies_;
 
-  std::vector<Rectangle> walls_ = {{100, 200, 300, 30}, {500, 120, 40, 220}};
 
-  std::vector<Weapon> weapons_;
-  int currentWeapon_ = 0;
+ 		std::vector<Rectangle> walls_ = {{100, 200, 300, 30}, {500, 120, 40, 220}};
 
-  std::vector<Bullet> playerBullets_;
-  std::vector<Bullet> enemyBullets_;
+  		std::vector<Weapon> weapons_;
+  		int currentWeapon_ = 0;
+
+  		std::vector<Bullet> playerBullets_;
+  		std::vector<Bullet> enemyBullets_;
+
+		GameState state_ = GameState::Playing;
 };
