@@ -1,7 +1,9 @@
 #pragma once
 
 #include "raylib.h"
+#include "gameplay/bullet/bullet.hpp"
 #include <vector>
+#include <optional>
 
 struct Enemy
 {
@@ -14,11 +16,13 @@ struct Enemy
 	float shootTimer {0.0f};
 
 	bool active {true};
+
+	int hp {80};
 	
 	Enemy() = default;
 	Enemy(Vector2 startPos, float moveSpeed, float size);
 
-	void Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls);
+	std::optional<Bullet> Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls);
 	void Draw() const;
 
 	bool CanShoot(Vector2 playerPos) const;

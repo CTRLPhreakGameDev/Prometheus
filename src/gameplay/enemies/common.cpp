@@ -27,16 +27,16 @@ Vector2 Enemy::GetDirectionToPlayer(Vector2 playerPos) const
 	return NormalizeSafe(toPlayer);
 }
 
-void Enemy::Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls)
+std::optional<Bullet> Enemy::Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls)
 {
 	if (!active)
-		return;
+		return std::nullopt;
 
 	Vector2 toPlayer = { playerPos.x - position.x, playerPos.y - position.y };
 	float distance {VectorLengthCustom(toPlayer)};
 	Vector2 dir {GetDirectionToPlayer(playerPos)};
 
-	float stopDistance {24.0f};
+	float stopDistance {140.0f};
 
 	float dx = 0.0f;
 	float dy = 0.0f;
@@ -45,6 +45,12 @@ void Enemy::Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& wa
 	{
 		dx = dir.x * speed * dt;
 		dy = dir.y * speed * dt;
+	}
+
+	if (distance < stopDistance)
+	{
+		dx = dir.x * speed * dt * -1;
+		dy = dir.y * speed * dt * -1;
 	}
 
 	// --- X axis ---
@@ -85,8 +91,17 @@ void Enemy::Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& wa
 	if (distance <= shootRange && shootTimer <= 0.0f)
 	{
 		shootTimer = shootCooldown;
-		// shoot
+		
+		Bullet b;
+		b.position = position;
+		b.velocity = { dir.x * 300.0f, dir.y * 300.0f };
+		return b;
 	}
+
+	if (hp <= 0)
+		active = false;
+
+	return std::nullopt;
 }
 
 void Enemy::Draw() const

@@ -43,6 +43,6 @@
 build/
 CMakeFiles/
 .idea/
+.cache/
 CMakeCache.txt
-CMakeLists.txt
 compile_commands.json

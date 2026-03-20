@@ -1,7 +1,10 @@
 #include "gameplay/player.hpp"
 
-void Player::Update(const Input &input, float dt,
-                    const std::vector<Rectangle> &walls) {
+void Player::Update(const Input &input, float dt, const std::vector<Rectangle> &walls) 
+{
+  if (!active)
+	  return;
+
   Vector2 move{0, 0};
   if (input.Left())
     move.x -= 1;
@@ -39,13 +42,19 @@ void Player::Update(const Input &input, float dt,
   for (const Rectangle &w : walls) {
     if (CheckCollisionRecs(hb, w)) {
       if (dy > 0)
-        pos_.y = w.y - hb.width / 2;
+        pos_.y = w.y - hb.height / 2;
       else
-        pos_.y = (w.y + w.height) + hb.width / 2;
+        pos_.y = (w.y + w.height) + hb.height / 2;
     }
+  }
+
+  if (hp <= 0)
+  {
+	  active = false;
   }
 }
 
-void Player::Draw() const {
+void Player::Draw() const
+{
   DrawRectangleV({pos_.x - 10, pos_.y - 10}, {20, 20}, BLUE);
 }

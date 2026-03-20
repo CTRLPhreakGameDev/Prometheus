@@ -5,8 +5,9 @@
 #include "core/input/input.hpp"
 #include <vector>
 
-class Player {
-public:
+class Player
+{
+  public:
     explicit Player(Vector2 startPos) : pos_(startPos) {}
 
     void Update(const Input& input, float dt, const std::vector<Rectangle>& walls);
@@ -19,7 +20,11 @@ public:
 	    return { pos_.x -10, pos_.y -10, 20, 20 };
     }
 
-private:
+    int hp = 100;
+
+  private:
+    bool active = true;
+
     Vector2 pos_{};
     float speed_ = 200.0f;
 };
