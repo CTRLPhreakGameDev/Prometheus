@@ -32,6 +32,8 @@ std::optional<Bullet> Enemy::Update(Vector2 playerPos, float dt, const std::vect
 	if (!active)
 		return std::nullopt;
 
+	if (flashTimer > 0.0f) flashTimer -= dt;
+
 	Vector2 toPlayer = { playerPos.x - position.x, playerPos.y - position.y };
 	float distance {VectorLengthCustom(toPlayer)};
 	Vector2 dir {GetDirectionToPlayer(playerPos)};
@@ -109,6 +111,7 @@ void Enemy::Draw() const
 	if (!active)
 		return;
 
-	DrawCircleV(position, radius, PURPLE);
+	Color c = (flashTimer > 0.0f) ? WHITE : PURPLE;
+	DrawCircleV(position, radius, c);
 	DrawCircleLines((int)position.x, (int)position.y, shootRange, Fade(DARKPURPLE, 0.15f));
 }

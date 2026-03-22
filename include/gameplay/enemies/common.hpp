@@ -18,6 +18,8 @@ struct Enemy
 	bool active {true};
 
 	int hp {80};
+
+	float flashTimer { 0.0f };
 	
 	Enemy() = default;
 	Enemy(Vector2 startPos, float moveSpeed, float size);

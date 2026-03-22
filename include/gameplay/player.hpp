@@ -27,4 +27,12 @@ class Player
 
     Vector2 pos_{};
     float speed_ = 200.0f;
+
+    float dashTimer_ = 0.0f;
+    float dashCooldown_ = 0.0f;
+    Vector2 dashVelocity_{};
+
+    static constexpr float kDashDuration = 0.18f;
+    static constexpr float kDashSpeed = 600.0f;
+    static constexpr float kDashCooldown = 0.6f;
 };

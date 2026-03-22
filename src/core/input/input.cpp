@@ -8,4 +8,5 @@ void Input::Update() {
     down_       = IsKeyDown(KEY_S) || IsKeyDown(KEY_DOWN);
     attack_     = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     attackHeld_ = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
+    dash_       = IsKeyPressed(KEY_LEFT_ALT);
 }

@@ -32,7 +32,7 @@ void Game::Run()
 
   weapons_ = {
 	  Weapon({"Pistol", 400.0f, 0.3f, 4.0f, 3.0f, 1, 0.0f, 10}),
-	  Weapon({"Shotgun", 350.0f, 0.6f, 4.5f, 2.0f, 6, 30.0f, 8}),
+	  Weapon({"Shotgun", 350.0f, 1.2f, 4.5f, 2.0f, 6, 30.0f, 8}),
 	  Weapon({"Super MEGA Gun", 500.0f, 0.08f, 3.0f, 2.0f, 1, 0.0f, 5}),
   };
 
@@ -119,6 +119,7 @@ void Game::Update(float dt)
 	    	{
                 	b.active = false;
                 	e.hp -= weapons_[currentWeapon_].Damage();
+			e.flashTimer = 0.15f;
             	}
   	}
   }
