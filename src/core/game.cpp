@@ -1,6 +1,34 @@
 #include "core/game.hpp"
 #include <algorithm>
 
+void Game::SpawnWave()
+{
+	enemies_.clear();
+
+	int count = std::min(2 + (wave_ - 1), 10);
+
+	float speed = std::min(80.0f + wave_ * 15.0f, 220.0f);
+
+	std::vector<Vector2> spawnPoints = {
+		{ 900.0f,  500.0f},
+        	{-400.0f,  300.0f},
+        	{ 200.0f, -500.0f},
+        	{ 700.0f, -300.0f},
+        	{-600.0f, -200.0f},
+        	{ 400.0f,  600.0f},
+        	{-200.0f,  600.0f},
+        	{ 800.0f,    0.0f},
+        	{   0.0f, -700.0f},
+        	{-700.0f,  400.0f},
+	};
+
+	for (int i = 0; i < count; i++)
+	{
+		Vector2 pos = spawnPoints[i % spawnPoints.size()];
+		enemies_.push_back(Enemy{pos, speed, 10.0f});
+	}
+}
+
 void Game::Reset()
 {
 	player_ = Player{{0.0f, 0.0f}};
@@ -10,11 +38,10 @@ void Game::Reset()
 	enemyBullets_.clear();
 	currentWeapon_ = 0;
 	state_ = GameState::Playing;
+	wave_ = 1;
+	score_ = 0;
 
-	enemies_.clear();
-	enemies_.push_back(Enemy{{900.0f, 500.0f}, 120.0f, 18.0f});
-	enemies_.push_back(Enemy{{-400.0f, 300.0f}, 100.0f, 18.0f});
-	enemies_.push_back(Enemy{{200.0f, -500.0f}, 80.0f, 18.0f});
+	SpawnWave();
 }
 
 void Game::Run()
@@ -62,6 +89,22 @@ void Game::Update(float dt)
 	  if (IsKeyPressed(KEY_R))
 		  Reset();
 
+	  return;
+  }
+
+  if (state_ == GameState::BetweenWaves)
+  {
+	  waveTimer_ -= dt;
+
+	  if (waveTimer_ <= 0.0f)
+	  {
+		  wave_++;
+		  SpawnWave();
+		  state_ = GameState::Playing;
+	  }
+
+	  player_.Update(input_, dt, walls_);
+	  camFollow_.Update(camera_, player_.Pos(), dt);
 	  return;
   }
 
@@ -130,7 +173,20 @@ void Game::Update(float dt)
   enemyBullets_.erase(std::remove_if(enemyBullets_.begin(), enemyBullets_.end(), isDead), enemyBullets_.end());
 
   auto isDeadEnemy =[](const Enemy& e) { return !e.active; };
+
+  int kills = (int)std::count_if(enemies_.begin(), enemies_.end(), isDeadEnemy);
+  score_ += kills * 100;
+
   enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), isDeadEnemy), enemies_.end());
+
+  if (enemies_.empty())
+  {
+	  state_ = GameState::BetweenWaves;
+	  waveTimer_ = kWaveDelay;
+
+	  playerBullets_.clear();
+	  enemyBullets_.clear();
+  }
 }
 
 Vector2 Game::GetMouseWorldPos() const
@@ -173,14 +229,36 @@ void Game::Draw()
 
   EndMode2D();
 
+  const char* waveMsg = TextFormat("Wave: %d", wave_);
+  int waveW = MeasureText(waveMsg, 30);
+
   DrawText(weapons_[currentWeapon_].Name().c_str(), 10, 10, 20, RAYWHITE);
   DrawText(TextFormat("HP: %d", player_.hp), 10, 34, 20, RED);
+  DrawText(TextFormat("Score: %d", score_), 10, 58, 20, YELLOW);
+  DrawText(waveMsg, kRenderW / 2 - waveW / 2, 10, 30, RAYWHITE);
+
+  if (state_ == GameState::BetweenWaves)
+  {
+	  const char* msg = TextFormat("Wave %d Complete!", wave_);
+	  int textW  = MeasureText(msg, 35);
+
+	  DrawText(msg, kRenderW / 2 - textW / 2, kRenderH / 2 - 40, 30, GREEN);
+
+	  const char* next = TextFormat("Next Wave in %.1f...", waveTimer_);
+	  int nextW = MeasureText(next, 20);
+	  DrawText(next, kRenderW / 2 - nextW / 2, kRenderH / 2, 20, RAYWHITE);
+  }
 
   if (state_ == GameState::GameOver)
   {
 	  DrawRectangle(0, 0, kRenderW, kRenderH, Fade(BLACK, 0.6f));
 	  DrawText("GAME OVER", kRenderW / 2 - 90, kRenderH / 2 - 20, 40, RED);
-	  DrawText("Press R to Restart", kRenderW / 2 - 90, kRenderH / 2 + 30, 20, RAYWHITE);
+  	  
+	  const char* scoreMsg = TextFormat("Final Score: %d", score_);
+	  int scoreW = MeasureText(scoreMsg, 20);
+	  DrawText(scoreMsg, kRenderW /2 -scoreW / 2, kRenderH / 2 + 20, 20, YELLOW);
+
+	  DrawText("Press R to Restart", kRenderW / 2 - 90, kRenderH / 2 + 50, 20, RAYWHITE);
   }
 
   EndTextureMode();

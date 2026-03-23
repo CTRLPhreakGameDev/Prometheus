@@ -12,6 +12,7 @@
 enum class GameState
 {
 	Playing,
+	BetweenWaves,
 	GameOver,
 };
 
@@ -23,6 +24,7 @@ class Game {
   		void Update(float dt);
   		void Draw();
 		void Reset();
+		void SpawnWave();
 
   		Vector2 GetMouseWorldPos() const;
 
@@ -47,4 +49,10 @@ class Game {
   		std::vector<Bullet> enemyBullets_;
 
 		GameState state_ = GameState::Playing;
+
+		int wave_ = 1;
+		float waveTimer_ = 0.0f;
+		int score_ = 0;
+
+		static constexpr float kWaveDelay = 3.0f;
 };
