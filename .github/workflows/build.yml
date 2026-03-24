@@ -42,7 +42,7 @@ jobs:
         run: choco install ninja
 
       - name: Configure (using MSVC)
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DUSE_SYSTEM_RAYLIB=OFF
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DUSE_SYSTEM_RAYLIB=OFF -DCMAKE_EXE_LINKEY_FLAGS="-static-libgcc -static-libstdc++ -static"
 
       - name: Build
         run: cmake --build build
