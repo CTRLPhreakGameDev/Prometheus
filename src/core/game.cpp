@@ -52,9 +52,9 @@ void Game::Run()
 
 	InitAudioDevice();
 
-	sfxShoot_ = LoadSound(assets/sfx/shoot.wav);
-	sfxHit_ = LoadSound(assets/sfx/hit.wav);
-	sfxDeath_ = LoadSound(assets/sfx/death.wav);
+	sfxShoot_ = LoadSound("assets/sfx/shoot.wav");
+	sfxHit_ = LoadSound("assets/sfx/hit.wav");
+	sfxDeath_ = LoadSound("assets/sfx/death.wav");
 
 	SetSoundVolume(sfxShoot_, 0.4f);
 	SetSoundVolume(sfxHit_, 0.6f);
