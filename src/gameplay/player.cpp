@@ -32,7 +32,7 @@ void Player::Update(const Input &input, float dt, const std::vector<Rectangle> &
   if (dashing)
   {
   	dx = dashVelocity_.x * dt;
-	dy = dashVelocity_.y * dt;
+	  dy = dashVelocity_.y * dt;
   }
   else 
   {

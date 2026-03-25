@@ -9,9 +9,11 @@ class Player
 {
   public:
     explicit Player(Vector2 startPos) : pos_(startPos) {}
-
+    
     void Update(const Input& input, float dt, const std::vector<Rectangle>& walls);
     void Draw() const;
+    
+    Texture2D player = LoadTexture("assets/sprites/player.png");
 
     Vector2 Pos() const { return pos_; }
 
