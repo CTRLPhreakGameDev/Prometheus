@@ -41,8 +41,11 @@ jobs:
       - name: Install Ninja
         run: choco install ninja
 
+      - name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+
       - name: Configure (using MSVC)
-        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DUSE_SYSTEM_RAYLIB=OFF
+        run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DUSE_SYSTEM_RAYLIB=OFF -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
 
       - name: Build
         run: cmake --build build
