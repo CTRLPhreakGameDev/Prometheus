@@ -46,40 +46,56 @@ void Game::Reset()
 
 void Game::Run()
 {
-  SetConfigFlags(FLAG_FULLSCREEN_MODE);
-  InitWindow(0, 0, "game");
-  SetTargetFPS(60);
+	SetConfigFlags(FLAG_FULLSCREEN_MODE);
+	InitWindow(0, 0, "game");
+	SetTargetFPS(60);
 
-  target_ = LoadRenderTexture(kRenderW, kRenderH);
-  SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
+	InitAudioDevice();
 
-  camera_.offset = { kRenderW / 2.0f, kRenderH / 2.0f };
-  camera_.rotation = 0.0f;
-  camera_.zoom = 1.0f;
+	sfxShoot_ = LoadSound(assets/sfx/shoot.wav);
+	sfxHit_ = LoadSound(assets/sfx/hit.wav);
+	sfxDeath_ = LoadSound(assets/sfx/death.wav);
 
-  weapons_ = {
-	  Weapon({"Pistol", 400.0f, 0.3f, 4.0f, 3.0f, 1, 0.0f, 10}),
-	  Weapon({"Shotgun", 350.0f, 1.2f, 4.5f, 2.0f, 6, 30.0f, 8}),
-	  Weapon({"Super MEGA Gun", 500.0f, 0.08f, 3.0f, 2.0f, 1, 0.0f, 5}),
-  };
+	SetSoundVolume(sfxShoot_, 0.4f);
+	SetSoundVolume(sfxHit_, 0.6f);
+	SetSoundVolume(sfxDeath_, 0.8f);
 
-  Reset();
+	target_ = LoadRenderTexture(kRenderW, kRenderH);
+	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
 
-  while (!WindowShouldClose())
-  {
-    float dt = GetFrameTime();
+	camera_.offset = { kRenderW / 2.0f, kRenderH / 2.0f };
+	camera_.rotation = 0.0f;
+	camera_.zoom = 1.0f;
 
-    input_.Update();
-    Update(dt);
+	weapons_ = {
+		Weapon({"Pistol", 400.0f, 0.3f, 4.0f, 3.0f, 1, 0.0f, 10}),
+		Weapon({"Shotgun", 350.0f, 1.2f, 4.5f, 2.0f, 6, 30.0f, 8}),
+		Weapon({"Super MEGA Gun", 500.0f, 0.08f, 3.0f, 2.0f, 1, 0.0f, 5}),
+	};
 
-    BeginDrawing();
-    ClearBackground(BLACK);
-    Draw();
-    EndDrawing();
-  }
+	Reset();
 
-  UnloadRenderTexture(target_);
-  CloseWindow();
+	while (!WindowShouldClose())
+	{
+		float dt = GetFrameTime();
+
+		input_.Update();
+		Update(dt);
+
+		BeginDrawing();
+		ClearBackground(BLACK);
+		Draw();
+		EndDrawing();
+	}
+
+	UnloadSound(sfxShoot_);
+	UnloadSound(sfxHit_);
+	UnloadSound(sfxDeath_);
+
+	UnloadRenderTexture(target_);
+
+	CloseAudioDevice();
+	CloseWindow();
 }
 
 void Game::Update(float dt)
@@ -113,6 +129,7 @@ void Game::Update(float dt)
 
   if (player_.hp <= 0)
   {
+  	  PlaySound(sfxDeath_);
 	  state_ = GameState::GameOver;
 	  return;
   }
@@ -133,6 +150,10 @@ void Game::Update(float dt)
   Vector2 dir = Vector2Normalize(Vector2Subtract(mouseWorld, player_.Pos()));
 
   auto newBullets = weapons_[currentWeapon_].Update(input_.AttackHeld(), player_.Pos(), dir, dt);
+
+  if (!newBullets.empty())
+  	PlaySound(sfxShoot_);
+
   playerBullets_.insert(playerBullets_.end(), newBullets.begin(), newBullets.end());
 
   for (Bullet &b : playerBullets_)
@@ -148,6 +169,7 @@ void Game::Update(float dt)
     	if (b.active && CheckCollisionRecs(b.Hitbox(), playerHb))
     	{
 	    	b.active = false;
+    		PlaySound(sfxHit_);
   	    	player_.hp -= 10;
     	}
   }

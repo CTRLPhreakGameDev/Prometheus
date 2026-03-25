@@ -55,4 +55,8 @@ class Game {
 		int score_ = 0;
 
 		static constexpr float kWaveDelay = 3.0f;
+
+		Sound sfxShoot_;
+		Sound sfxHit_;
+		Sound sfxDeath_;
 };
