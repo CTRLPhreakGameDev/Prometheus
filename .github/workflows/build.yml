@@ -63,7 +63,7 @@ jobs:
           xcopy /E /I assets release\assets
           
       - name: Upload artifact
-              uses: actions/upload-artifact@v4
-              with:
-                name: game-windows
-                path: release/
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-windows
+          path: release/
