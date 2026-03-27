@@ -11,6 +11,8 @@ struct Bullet {
     float lifetime = 3.0f;
     bool active = true;
 
+    const Texture2D* sprite = nullptr;
+
     void Update(float dt, const std::vector<Rectangle>& walls);
     void Draw() const;
 

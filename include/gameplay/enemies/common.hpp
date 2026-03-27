@@ -20,6 +20,8 @@ struct Enemy
 	int hp {80};
 
 	float flashTimer { 0.0f };
+
+	const Texture2D* sprite = nullptr;
 	
 	Enemy() = default;
 	Enemy(Vector2 startPos, float moveSpeed, float size);

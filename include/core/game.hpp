@@ -59,4 +59,8 @@ class Game {
 		Sound sfxShoot_;
 		Sound sfxHit_;
 		Sound sfxDeath_;
+
+		Texture2D texEnemy_{};
+		Texture2D texBullet_{};
+		float playerAngle_ = 0.0f;
 };

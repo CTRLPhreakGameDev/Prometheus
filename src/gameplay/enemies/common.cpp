@@ -110,8 +110,23 @@ void Enemy::Draw() const
 {
 	if (!active)
 		return;
+	
+	if (sprite)
+	{
+		float size = 32.0f;
 
-	Color c = (flashTimer > 0.0f) ? WHITE : PURPLE;
-	DrawCircleV(position, radius, c);
+		Rectangle src = { 0, 0, (float)sprite->width, (float)sprite->height };
+		Rectangle dst = { position.x, position.y, size, size };
+		Vector2 origin = { size / 2.0f, size / 2.0f };
+		Color tint = (flashTimer > 0.0f) ? RED : WHITE;
+
+		DrawTexturePro(*sprite, src, dst, origin, 0.0f, tint);
+	}
+	else 
+	{
+		Color c = (flashTimer > 0.0f) ? WHITE : PURPLE;
+		DrawCircleV(position, radius, c);
+	}
+
 	DrawCircleLines((int)position.x, (int)position.y, shootRange, Fade(DARKPURPLE, 0.15f));
 }

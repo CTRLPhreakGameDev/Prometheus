@@ -1,12 +1,12 @@
 #include "core/game.hpp"
 #include <algorithm>
+#include <cmath>
 
 void Game::SpawnWave()
 {
 	enemies_.clear();
 
 	int count = std::min(2 + (wave_ - 1), 10);
-
 	float speed = std::min(80.0f + wave_ * 15.0f, 220.0f);
 
 	std::vector<Vector2> spawnPoints = {
@@ -24,8 +24,9 @@ void Game::SpawnWave()
 
 	for (int i = 0; i < count; i++)
 	{
-		Vector2 pos = spawnPoints[i % spawnPoints.size()];
-		enemies_.push_back(Enemy{pos, speed, 10.0f});
+		Enemy e{spawnPoints[i % spawnPoints.size()], speed, 16.0f};
+		e.sprite =  &texEnemy_;
+		enemies_.push_back(e);
 	}
 }
 
@@ -60,6 +61,14 @@ void Game::Run()
 	SetSoundVolume(sfxHit_, 0.6f);
 	SetSoundVolume(sfxDeath_, 0.8f);
 
+	texEnemy_ = LoadTexture("assets/sprites/enemy.png");
+	texBullet_ = LoadTexture("assets/sprites/bullet.png");
+
+	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
+	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
+
+	player_.LoadSprite("assets/sprites/player.png", 3);
+
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
 
@@ -87,6 +96,11 @@ void Game::Run()
 		Draw();
 		EndDrawing();
 	}
+
+	player_.UnloadSprite();
+
+	UnloadTexture(texEnemy_);
+	UnloadTexture(texBullet_);
 
 	UnloadSound(sfxShoot_);
 	UnloadSound(sfxHit_);
@@ -137,7 +151,10 @@ void Game::Update(float dt)
   for (Enemy& e : enemies_)
   {
   	if (auto shot = e.Update(player_.Pos(), dt, walls_))
+	{
+  		shot->sprite = &texBullet_;
     		enemyBullets_.push_back(*shot);
+  	}
   }
 
   int scroll = (int)GetMouseWheelMove();
@@ -149,10 +166,15 @@ void Game::Update(float dt)
   Vector2 mouseWorld = GetMouseWorldPos();
   Vector2 dir = Vector2Normalize(Vector2Subtract(mouseWorld, player_.Pos()));
 
+  playerAngle_ = atan2f(dir.y, dir.x) * RAD2DEG + 90.0f;
+
   auto newBullets = weapons_[currentWeapon_].Update(input_.AttackHeld(), player_.Pos(), dir, dt);
 
   if (!newBullets.empty())
   	PlaySound(sfxShoot_);
+
+  for (Bullet& b : newBullets)
+	b.sprite =  &texBullet_;
 
   playerBullets_.insert(playerBullets_.end(), newBullets.begin(), newBullets.end());
 
@@ -238,7 +260,7 @@ void Game::Draw()
     DrawRectangleLinesEx(r, 1, DARKGRAY);
   }
 
-  player_.Draw();
+  player_.Draw(playerAngle_);
   
   for (const Enemy& e : enemies_)
 	  e.Draw();

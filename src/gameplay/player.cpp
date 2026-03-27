@@ -1,9 +1,31 @@
 #include "gameplay/player.hpp"
+#include <cmath>
+
+void Player::LoadSprite(const char* path, int frameCount)
+{
+	sprite_ = LoadTexture(path);
+	hasSprite_ = true;
+	frameCount_ = frameCount;
+}
+
+void Player::UnloadSprite()
+{
+	if (hasSprite_)
+		UnloadTexture(sprite_);
+}
 
 void Player::Update(const Input &input, float dt, const std::vector<Rectangle> &walls) 
 {
   if (!active)
 	  return;
+
+  frameTimer_ += dt;
+  if (frameTimer_ >= frameInterval_)
+  {
+	  frameTimer_ -= frameInterval_;
+
+	  currentFrame_ = (currentFrame_ + 1) % frameCount_;
+  }
 
   if (dashTimer_ > 0.0f) dashTimer_ -= dt;
   if (dashCooldown_ > 0.0f) dashCooldown_ -= dt;
@@ -85,10 +107,32 @@ void Player::Update(const Input &input, float dt, const std::vector<Rectangle> &
   }
 }
 
-void Player::Draw() const
+void Player::Draw(float angle) const
 {
-  Color c = (dashTimer_ > 0.0f) ? WHITE : BLUE;
-  DrawRectangleV({pos_.x - 10, pos_.y - 10}, {20, 20}, c);
+  if (hasSprite_)
+  {
+	  float size = 32.0f;
+	  float frameWidth = (float)sprite_.width / frameCount_;
+
+	  Rectangle src = {
+		currentFrame_ + frameWidth,
+		0,
+		frameWidth,
+		(float)sprite_.height
+	  };
+
+	  Rectangle dst = { pos_.x, pos_.y, size, size };
+	  Vector2 origin = { size / 2.0f, size / 2.0f };
+
+  	  Color tint = (dashTimer_ > 0.0f) ? Fade(WHITE, 0.6f) : WHITE;
+
+	  DrawTexturePro(sprite_, src, dst, origin, angle, tint);
+  }
+  else 
+  {
+	  Color c = (dashTimer_ > 0.0f) ? WHITE : BLUE;
+  	  DrawRectangleV({pos_.x - 10, pos_.y - 10}, {20, 20}, c);
+  }
 
   if (dashCooldown_ > 0.0f && dashTimer_ <= 0.0f)
   {
