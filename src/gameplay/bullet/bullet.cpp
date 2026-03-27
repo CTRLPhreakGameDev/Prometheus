@@ -36,7 +36,7 @@ void Bullet::Draw() const
   {
 	  float size = 8.0f;
 
-	  float angle = atan2f(velocity.x, velocity.y);
+	  float angle = atan2f(velocity.x, velocity.y) * RAD2DEG;
 
 	  Rectangle src = { 0, 0, (float)sprite->width, (float)sprite->height };
 	  Rectangle dst = { position.x, position.y, size, size };

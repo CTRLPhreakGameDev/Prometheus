@@ -33,6 +33,7 @@ void Game::SpawnWave()
 void Game::Reset()
 {
 	player_ = Player{{0.0f, 0.0f}};
+	player_.LoadSprite("assets/sprites/player.png", 3);
 	camera_.target = player_.Pos();
 
 	playerBullets_.clear();
@@ -64,10 +65,11 @@ void Game::Run()
 	texEnemy_ = LoadTexture("assets/sprites/enemy.png");
 	texBullet_ = LoadTexture("assets/sprites/bullet.png");
 
+	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load enemy sprite");
+	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullet sprite");
+
 	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
-
-	player_.LoadSprite("assets/sprites/player.png", 3);
 
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);

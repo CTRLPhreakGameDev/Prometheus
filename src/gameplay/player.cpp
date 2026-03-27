@@ -4,8 +4,11 @@
 void Player::LoadSprite(const char* path, int frameCount)
 {
 	sprite_ = LoadTexture(path);
-	hasSprite_ = true;
+	hasSprite_ = (sprite_.width > 0);
 	frameCount_ = frameCount;
+
+	if (!hasSprite_)
+		TraceLog(LOG_WARNING, "Failed load player sprite %s", path);
 }
 
 void Player::UnloadSprite()
@@ -115,7 +118,7 @@ void Player::Draw(float angle) const
 	  float frameWidth = (float)sprite_.width / frameCount_;
 
 	  Rectangle src = {
-		currentFrame_ + frameWidth,
+		currentFrame_ * frameWidth,
 		0,
 		frameWidth,
 		(float)sprite_.height
