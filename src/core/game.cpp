@@ -135,7 +135,7 @@ void Game::Update(float dt)
 {
   if (state_ == GameState::GameOver)
   {
-	  if (IsKeyPressed(KEY_R))
+	  if (input_.Restart())
 		  Reset();
 
 	  return;

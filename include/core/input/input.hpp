@@ -12,6 +12,7 @@ public:
     bool AttackHeld() const { return attackHeld_; }
     bool Dash()       const { return dash_; }
     bool GameInfo()   const { return gameInfo_; }
+    bool Restart()    const { return restart_; }
 
 private:
     bool left_ = false, right_ = false, up_ = false, down_ = false;
@@ -21,4 +22,6 @@ private:
     bool dash_ = false;
 
     bool gameInfo_ = false;
+
+    bool restart_ = false;
 };

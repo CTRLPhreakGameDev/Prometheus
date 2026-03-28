@@ -10,4 +10,5 @@ void Input::Update() {
     attackHeld_ = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
     dash_       = IsKeyPressed(KEY_LEFT_ALT);
     gameInfo_   = IsKeyDown(KEY_TAB);
+    restart_    = IsKeyPressed(KEY_R);
 }
