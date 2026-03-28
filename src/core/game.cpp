@@ -2,6 +2,23 @@
 #include <algorithm>
 #include <cmath>
 
+void Game::DrawHud()
+{
+	float barWidth = 200.0f;
+	float barHeight = 12.0f;
+	float x = 110 - barWidth / 2.0f;
+	float y = kRenderH - 24.0f;
+
+	DrawRectangle((int)x, (int)y, (int)barWidth, (int)barHeight, DARKGRAY);
+
+	float ratio = (float)player_.hp / (float)player_.maxHp;
+	float filledWidth = barWidth * ratio;
+
+	DrawRectangle((int)x, (int)y, (int)filledWidth, (int)barHeight, RED);
+
+	DrawRectangleLinesEx({x, y, barWidth, barHeight}, 1, RAYWHITE);
+}
+
 void Game::SpawnWave()
 {
 	enemies_.clear();
@@ -11,15 +28,15 @@ void Game::SpawnWave()
 
 	std::vector<Vector2> spawnPoints = {
 		{ 900.0f,  500.0f},
-        	{-400.0f,  300.0f},
-        	{ 200.0f, -500.0f},
-        	{ 700.0f, -300.0f},
-        	{-600.0f, -200.0f},
-        	{ 400.0f,  600.0f},
-        	{-200.0f,  600.0f},
-        	{ 800.0f,    0.0f},
-        	{   0.0f, -700.0f},
-        	{-700.0f,  400.0f},
+        {-400.0f,  300.0f},
+        { 200.0f, -500.0f},
+        { 700.0f, -300.0f},
+        {-600.0f, -200.0f},
+        { 400.0f,  600.0f},
+        {-200.0f,  600.0f},
+        { 800.0f,    0.0f},
+        {   0.0f, -700.0f},
+        {-700.0f,  400.0f},
 	};
 
 	for (int i = 0; i < count; i++)
@@ -278,9 +295,12 @@ void Game::Draw()
   const char* waveMsg = TextFormat("Wave: %d", wave_);
   int waveW = MeasureText(waveMsg, 30);
 
-  DrawText(weapons_[currentWeapon_].Name().c_str(), 10, 10, 20, RAYWHITE);
-  DrawText(TextFormat("HP: %d", player_.hp), 10, 34, 20, RED);
-  DrawText(TextFormat("Score: %d", score_), 10, 58, 20, YELLOW);
+  DrawText(weapons_[currentWeapon_].Name().c_str(), 10, kRenderH - 50.0f, 20, RAYWHITE);
+  DrawHud();
+  if (input_.GameInfo())
+  {
+  	  DrawText(TextFormat("Score: %d", score_), 10, 20, 20, YELLOW);
+  }
   DrawText(waveMsg, kRenderW / 2 - waveW / 2, 10, 30, RAYWHITE);
 
   if (state_ == GameState::BetweenWaves)

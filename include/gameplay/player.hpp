@@ -24,6 +24,7 @@ class Player
     }
 
     int hp = 100;
+    int maxHp = 100;
 
   private:
     bool active = true;

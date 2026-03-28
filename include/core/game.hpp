@@ -25,6 +25,7 @@ class Game {
   		void Draw();
 		void Reset();
 		void SpawnWave();
+		void DrawHud();
 
   		Vector2 GetMouseWorldPos() const;
 

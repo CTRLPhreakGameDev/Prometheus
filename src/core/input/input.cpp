@@ -9,4 +9,5 @@ void Input::Update() {
     attack_     = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     attackHeld_ = IsMouseButtonDown(MOUSE_BUTTON_LEFT);
     dash_       = IsKeyPressed(KEY_LEFT_ALT);
+    gameInfo_   = IsKeyDown(KEY_TAB);
 }
