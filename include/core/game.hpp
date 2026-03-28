@@ -8,12 +8,22 @@
 #include "gfx/cameraFollow.hpp"
 #include "raylib.h"
 #include <vector>
+#include <array>
 
 enum class GameState
 {
+	MainMenu,
+	Options,
 	Playing,
 	BetweenWaves,
 	GameOver,
+};
+
+struct Star
+{
+	Vector2 position;
+	float speed;
+	float radius;
 };
 
 class Game {
@@ -26,6 +36,12 @@ class Game {
 		void Reset();
 		void SpawnWave();
 		void DrawHud();
+		void DrawMainMenu();
+		void DrawOptions();
+		void UpdateMainMenu();
+		void InitStars();
+		void UpdateStars(float dt);
+
 
   		Vector2 GetMouseWorldPos() const;
 
@@ -49,7 +65,7 @@ class Game {
   		std::vector<Bullet> playerBullets_;
   		std::vector<Bullet> enemyBullets_;
 
-		GameState state_ = GameState::Playing;
+		GameState state_ = GameState::MainMenu;
 
 		int wave_ = 1;
 		float waveTimer_ = 0.0f;
@@ -63,5 +79,8 @@ class Game {
 
 		Texture2D texEnemy_{};
 		Texture2D texBullet_{};
+		Texture2D texFredrick_{};
 		float playerAngle_ = 0.0f;
+
+		std::array<Star, 150> stars_;
 };

@@ -2,6 +2,151 @@
 #include <algorithm>
 #include <cmath>
 
+void Game::InitStars()
+{
+	for (Star& s : stars_)
+	{
+		s.position = { (float)(rand() % kRenderW), (float)(rand() % kRenderH) };
+		s.speed = 10.0f + (rand() % 60);
+		s.radius = (s.speed > 40.0f) ? 2.0f : 1.0f;
+	}
+}
+
+void Game::UpdateStars(float dt)
+{
+	for (Star& s : stars_)
+	{
+		s.position.y += s.speed * dt;
+
+		if (s.position.y > kRenderH)
+		{
+			s.position.y = 0.0f;
+		}
+	}
+}
+
+static bool MouseOverRect(Rectangle r)
+{
+	int sw = GetScreenWidth();
+	int sh = GetScreenHeight();
+	float scale = std::min((float)sw / 800, (float) sh / 450);
+	float offsetX = (sw - 800 * scale) / 2.0f;
+	float offsetY = (sh - 450 * scale) / 2.0f;
+	Vector2 mouse = GetMousePosition();
+	Vector2 rPos = { (mouse.x - offsetX) / scale, (mouse.y - offsetY) / scale };
+
+	return CheckCollisionPointRec(rPos, r);
+}
+
+void Game::UpdateMainMenu()
+{
+	Rectangle playRect = { 300, 180, 200, 36 };
+	Rectangle optionsRect = { 300, 230, 200, 36 };
+	Rectangle quitRect = { 300, 280, 200, 36 };
+
+	if (input_.Attack())
+	{
+		if (MouseOverRect(playRect))
+		{
+			Reset();
+		}
+		else if (MouseOverRect(optionsRect))
+		{
+			state_ = GameState::Options;
+		}
+		else if (MouseOverRect(quitRect))
+		{
+			CloseWindow();
+		}
+	}
+}
+
+void Game::DrawMainMenu()
+{
+	for (const Star& s : stars_)
+	{
+		unsigned char alpha = (s.radius > 1.0f) ? 255 : 180;
+		DrawCircleV(s.position, s.radius, {255, 255, 255, alpha});
+	}
+
+	if (texFredrick_.width > 0)
+	{
+		float scale = (float)kRenderW / texFredrick_.width;
+		float dstH = texFredrick_.height * scale;
+		float dstY = kRenderH - dstH;
+
+		Rectangle src = { 0, 0, (float)texFredrick_.width, (float)texFredrick_.height };
+		Rectangle dst = { 0, dstY, (float)kRenderW, dstH };
+
+		DrawTexturePro(texFredrick_, src, dst, { 0, 0 }, 0.0f, WHITE);
+	}
+
+	const char* title = "OPERATION PROMETHEUS";
+	int titleW = MeasureText(title, 55);
+	DrawText(title, kRenderW / 2 - titleW / 2, 60, 55, RAYWHITE);
+
+	Rectangle playRect = { 300, 180, 200, 36 };
+	Rectangle optionsRect = { 300, 230, 200, 36 };
+	Rectangle quitRect = { 300, 280, 200, 36 };
+
+	auto drawButton = [](Rectangle r, const char* label)
+	{
+		Color bg = MouseOverRect(r) ? Fade(RAYWHITE, 0.25f) : Fade(RAYWHITE, 0.08f);
+		DrawRectangleRec(r, bg);
+		DrawRectangleLinesEx(r, 1, RAYWHITE);
+
+		int tw = MeasureText(label, 20);
+		DrawText(label, (int)(r.x + r.width / 2 - tw / 2), (int)(r.y + 8), 20, RAYWHITE);
+	};
+
+	drawButton(playRect, "PLAY");
+	drawButton(optionsRect, "OPTIONS");
+	drawButton(quitRect, "QUIT");
+}
+
+void Game::DrawOptions()
+{
+	for (const Star& s : stars_)
+		DrawCircleV(s.position, s.radius, {255, 255, 255, 180});
+
+	const char* title = "CONTROLS";
+	int tw = MeasureText(title, 40);
+	DrawText(title, kRenderW / 2 - tw / 2, 60, 40, RAYWHITE);
+
+	const char* lines[] = {
+		"WASD / Arrow Keys  -  Move",
+		"Left Mouse Button  -  Shoot",
+		"Left Alt           -  Dash",
+		"Scroll Wheel       -  Switch Weapons",
+		"Tab                -  Show Score",
+		"R                  -  Restart (game over)",
+	};
+
+	int y = 140;
+	for (const char* line : lines)
+	{
+		int lw = MeasureText(line, 18);
+		DrawText(line, kRenderW / 2 - lw / 2, y, 18, LIGHTGRAY);
+		y += 32;
+	}
+
+	Rectangle backRect = { 300, 370, 200, 36 };
+	auto drawButton = [](Rectangle r, const char* label)
+    	{
+        	Color bg = MouseOverRect(r) ? Fade(RAYWHITE, 0.25f) : Fade(RAYWHITE, 0.08f);
+        	DrawRectangleRec(r, bg);
+        	DrawRectangleLinesEx(r, 1, RAYWHITE);
+
+        	int tw = MeasureText(label, 20);
+        	DrawText(label, (int)(r.x + r.width / 2 - tw / 2), (int)(r.y + 8), 20, RAYWHITE);
+    	};
+
+	drawButton(backRect, "BACK");
+
+	if (input_.Attack() && MouseOverRect(backRect))
+		state_ = GameState::MainMenu;
+}
+
 void Game::DrawHud()
 {
 	float barWidth = 200.0f;
@@ -81,12 +226,15 @@ void Game::Run()
 
 	texEnemy_ = LoadTexture("assets/sprites/enemy.png");
 	texBullet_ = LoadTexture("assets/sprites/bullet.png");
+	texFredrick_ = LoadTexture("assets/sprites/fredrick.png");
 
 	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load enemy sprite");
 	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullet sprite");
+	if (texFredrick_.width == 0) TraceLog(LOG_WARNING, "Failed to load Fredrick");
 
 	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
+	SetTextureFilter(texFredrick_, TEXTURE_FILTER_POINT);
 
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
@@ -101,13 +249,14 @@ void Game::Run()
 		Weapon({"Super MEGA Gun", 500.0f, 0.08f, 3.0f, 2.0f, 1, 0.0f, 5}),
 	};
 
-	Reset();
+	InitStars();
 
 	while (!WindowShouldClose())
 	{
 		float dt = GetFrameTime();
 
 		input_.Update();
+		UpdateStars(dt);
 		Update(dt);
 
 		BeginDrawing();
@@ -120,6 +269,7 @@ void Game::Run()
 
 	UnloadTexture(texEnemy_);
 	UnloadTexture(texBullet_);
+	UnloadTexture(texFredrick_);
 
 	UnloadSound(sfxShoot_);
 	UnloadSound(sfxHit_);
@@ -133,6 +283,12 @@ void Game::Run()
 
 void Game::Update(float dt)
 {
+  if (state_ == GameState::MainMenu || state_ == GameState::Options)
+  {
+	  UpdateMainMenu();
+	  return;
+  }
+
   if (state_ == GameState::GameOver)
   {
 	  if (input_.Restart())
@@ -270,61 +426,72 @@ Vector2 Game::GetMouseWorldPos() const
 void Game::Draw()
 {
   BeginTextureMode(target_);
-  ClearBackground(BLACK);
+  ClearBackground({ 5, 5, 15, 255 });
 
-  BeginMode2D(camera_);
-
-  for (const Rectangle &r : walls_) 
+  if (state_ == GameState::MainMenu)
   {
-    DrawRectangleLinesEx(r, 1, DARKGRAY);
+	  DrawMainMenu();
   }
+  else if (state_ == GameState::Options)
+  {
+	  DrawOptions();
+  }
+  else 
+  {
+  	BeginMode2D(camera_);
 
-  player_.Draw(playerAngle_);
+  	for (const Rectangle &r : walls_) 
+  	{
+    		DrawRectangleLinesEx(r, 1, DARKGRAY);
+  	}
+
+  	player_.Draw(playerAngle_);
   
-  for (const Enemy& e : enemies_)
-	  e.Draw();
+  	for (const Enemy& e : enemies_)
+	 	e.Draw();
 
-  for (const Bullet &b : playerBullets_)
-    b.Draw();
+  	for (const Bullet &b : playerBullets_)
+    		b.Draw();
 
-  for (const Bullet &b : enemyBullets_)
-    b.Draw();
+  	for (const Bullet &b : enemyBullets_)
+		b.Draw();
 
-  EndMode2D();
+  	EndMode2D();
 
-  const char* waveMsg = TextFormat("Wave: %d", wave_);
-  int waveW = MeasureText(waveMsg, 30);
+  	const char* waveMsg = TextFormat("Wave: %d", wave_);
+  	int waveW = MeasureText(waveMsg, 30);
 
-  DrawText(weapons_[currentWeapon_].Name().c_str(), 10, kRenderH - 50.0f, 20, RAYWHITE);
-  DrawHud();
-  if (input_.GameInfo())
-  {
-  	  DrawText(TextFormat("Score: %d", score_), 10, 20, 20, YELLOW);
-  }
-  DrawText(waveMsg, kRenderW / 2 - waveW / 2, 10, 30, RAYWHITE);
+  	DrawText(weapons_[currentWeapon_].Name().c_str(), 10, kRenderH - 50.0f, 20, RAYWHITE);
+ 	DrawHud();
+  	if (input_.GameInfo())
+  	{
+  	  	DrawText(TextFormat("Score: %d", score_), 10, 20, 20, YELLOW);
+  	}
+  	DrawText(waveMsg, kRenderW / 2 - waveW / 2, 10, 30, RAYWHITE);
 
-  if (state_ == GameState::BetweenWaves)
-  {
-	  const char* msg = TextFormat("Wave %d Complete!", wave_);
-	  int textW  = MeasureText(msg, 35);
+  	if (state_ == GameState::BetweenWaves)
+  	{
+	  	const char* msg = TextFormat("Wave %d Complete!", wave_);
+	  	int textW  = MeasureText(msg, 35);
 
-	  DrawText(msg, kRenderW / 2 - textW / 2, kRenderH / 2 - 40, 30, GREEN);
+	  	DrawText(msg, kRenderW / 2 - textW / 2, kRenderH / 2 - 40, 30, GREEN);
 
-	  const char* next = TextFormat("Next Wave in %.1f...", waveTimer_);
-	  int nextW = MeasureText(next, 20);
-	  DrawText(next, kRenderW / 2 - nextW / 2, kRenderH / 2, 20, RAYWHITE);
-  }
+	  	const char* next = TextFormat("Next Wave in %.1f...", waveTimer_);
+	  	int nextW = MeasureText(next, 20);
+	  	DrawText(next, kRenderW / 2 - nextW / 2, kRenderH / 2, 20, RAYWHITE);
+  	}
 
-  if (state_ == GameState::GameOver)
-  {
-	  DrawRectangle(0, 0, kRenderW, kRenderH, Fade(BLACK, 0.6f));
-	  DrawText("GAME OVER", kRenderW / 2 - 90, kRenderH / 2 - 20, 40, RED);
+  	if (state_ == GameState::GameOver)
+  	{
+	  	DrawRectangle(0, 0, kRenderW, kRenderH, Fade(BLACK, 0.6f));
+	  	DrawText("GAME OVER", kRenderW / 2 - 90, kRenderH / 2 - 20, 40, RED);
   	  
-	  const char* scoreMsg = TextFormat("Final Score: %d", score_);
-	  int scoreW = MeasureText(scoreMsg, 20);
-	  DrawText(scoreMsg, kRenderW /2 -scoreW / 2, kRenderH / 2 + 20, 20, YELLOW);
+	  	const char* scoreMsg = TextFormat("Final Score: %d", score_);
+	  	int scoreW = MeasureText(scoreMsg, 20);
+	  	DrawText(scoreMsg, kRenderW /2 -scoreW / 2, kRenderH / 2 + 20, 20, YELLOW);
 
-	  DrawText("Press R to Restart", kRenderW / 2 - 90, kRenderH / 2 + 50, 20, RAYWHITE);
+	  	DrawText("Press R to Restart", kRenderW / 2 - 90, kRenderH / 2 + 50, 20, RAYWHITE);
+  	}
   }
 
   EndTextureMode();
