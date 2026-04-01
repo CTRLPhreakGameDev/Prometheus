@@ -13,6 +13,8 @@ public:
     bool Dash()       const { return dash_; }
     bool GameInfo()   const { return gameInfo_; }
     bool Restart()    const { return restart_; }
+    bool Pause()      const { return pause_; }
+    bool Quit()       const { return quit_; }
 
 private:
     bool left_ = false, right_ = false, up_ = false, down_ = false;
@@ -24,4 +26,8 @@ private:
     bool gameInfo_ = false;
 
     bool restart_ = false;
+
+    bool pause_ = false;
+    
+    bool quit_ = false;
 };

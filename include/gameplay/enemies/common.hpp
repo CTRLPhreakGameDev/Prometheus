@@ -27,7 +27,7 @@ struct Enemy
 	Enemy(Vector2 startPos, float moveSpeed, float size);
 
 	std::optional<Bullet> Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls);
-	void Draw() const;
+	void Draw(float angle) const;
 
 	bool CanShoot(Vector2 playerPos) const;
 	Vector2 GetDirectionToPlayer(Vector2 playerPos) const;

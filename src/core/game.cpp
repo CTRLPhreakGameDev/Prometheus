@@ -7,8 +7,8 @@ void Game::InitStars()
 	for (Star& s : stars_)
 	{
 		s.position = { (float)(rand() % kRenderW), (float)(rand() % kRenderH) };
-		s.speed = 10.0f + (rand() % 60);
-		s.radius = (s.speed > 40.0f) ? 2.0f : 1.0f;
+		s.speed = (rand() % -10) - (rand() % 10);
+		s.radius = (s.speed > 5.5f) ? 2.0f : 1.0f;
 	}
 }
 
@@ -17,11 +17,26 @@ void Game::UpdateStars(float dt)
 	for (Star& s : stars_)
 	{
 		s.position.y += s.speed * dt;
+		s.position.x += ((rand() % -15) - (rand() % 10)) * dt;
 
 		if (s.position.y > kRenderH)
 		{
 			s.position.y = 0.0f;
 		}
+		else if (s.position.y < 0.0f)
+		{
+			s.position.y = kRenderH;
+		}
+
+		if (s.position.x > kRenderW)
+		{
+			s.position.x = 0.0f;
+		}
+		else if (s.position.x < 0.0f)
+		{
+			s.position.x =  kRenderW;
+		}
+
 	}
 }
 
@@ -213,6 +228,7 @@ void Game::Run()
 	SetConfigFlags(FLAG_FULLSCREEN_MODE);
 	InitWindow(0, 0, "game");
 	SetTargetFPS(60);
+	SetExitKey(0);
 
 	InitAudioDevice();
 
@@ -224,17 +240,20 @@ void Game::Run()
 	SetSoundVolume(sfxHit_, 0.6f);
 	SetSoundVolume(sfxDeath_, 0.8f);
 
-	texEnemy_ = LoadTexture("assets/sprites/enemy.png");
+	texEnemy_ = LoadTexture("assets/sprites/walter.png");
 	texBullet_ = LoadTexture("assets/sprites/bullet.png");
 	texFredrick_ = LoadTexture("assets/sprites/fredrick.png");
+	texHair_ = LoadTexture("assets/sprites/crosshair.png");
 
 	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load enemy sprite");
 	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullet sprite");
 	if (texFredrick_.width == 0) TraceLog(LOG_WARNING, "Failed to load Fredrick");
+	if (texHair_.width == 0) TraceLog(LOG_WARNING, "Failed to load the hair");
 
 	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texFredrick_, TEXTURE_FILTER_POINT);
+	SetTextureFilter(texHair_, TEXTURE_FILTER_POINT);
 
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
@@ -251,7 +270,7 @@ void Game::Run()
 
 	InitStars();
 
-	while (!WindowShouldClose())
+	while (!WindowShouldClose() && !shouldQuit_)
 	{
 		float dt = GetFrameTime();
 
@@ -270,6 +289,7 @@ void Game::Run()
 	UnloadTexture(texEnemy_);
 	UnloadTexture(texBullet_);
 	UnloadTexture(texFredrick_);
+	UnloadTexture(texHair_);
 
 	UnloadSound(sfxShoot_);
 	UnloadSound(sfxHit_);
@@ -296,6 +316,31 @@ void Game::Update(float dt)
 
 	  return;
   }
+
+  if (input_.Pause())
+  {
+	  if (state_ == GameState::Paused)
+	  {
+		  state_ = stateBeforePause_;
+	  }
+	  else
+	  {
+		  stateBeforePause_ = state_;
+		  state_ = GameState::Paused;
+	  }
+	  return;
+  }
+
+  if (state_ == GameState::Paused && input_.Quit())
+  {
+	  
+	  shouldQuit_ = true;
+	  
+	  return;
+  }
+
+  if (state_ == GameState::Paused)
+  	return;
 
   if (state_ == GameState::BetweenWaves)
   {
@@ -423,22 +468,51 @@ Vector2 Game::GetMouseWorldPos() const
 	return GetScreenToWorld2D(renderPos, camera_);
 }
 
+void Game::DrawPauseMenu()
+{
+	DrawRectangle(0, 0, kRenderW, kRenderH, Fade(BLACK, 0.55f));
+	
+	const char* title = "PAUSED";
+	int titleW = MeasureText(title, 40);
+	DrawText(title, kRenderW / 2.0f - titleW / 2.0f, kRenderH / 2 - 60, 40, RAYWHITE);
+
+	const char* resume = "Press 'ESC' to Resume";
+	int resumeW = MeasureText(resume, 20);
+	DrawText(resume, kRenderW / 2 - resumeW / 2, kRenderH / 2, 20, LIGHTGRAY);
+
+	const char* quit = "Press 'Q' to Quit";
+	int quitW = MeasureText(quit, 20);
+	DrawText(quit, kRenderW / 2 - quitW / 2, kRenderH / 2 + 30, 20, LIGHTGRAY);
+}
+
 void Game::Draw()
 {
   BeginTextureMode(target_);
   ClearBackground({ 5, 5, 15, 255 });
+  //ClearBackground(LIGHTGRAY);
 
   if (state_ == GameState::MainMenu)
   {
 	  DrawMainMenu();
+	  ShowCursor();
   }
   else if (state_ == GameState::Options)
   {
 	  DrawOptions();
+	  ShowCursor();
   }
   else 
   {
   	BeginMode2D(camera_);
+
+	HideCursor();
+
+	Vector2 mouseWorld = GetMouseWorldPos();
+	float size = 32.0f;
+	Rectangle src = { 0, 0, (float)texHair_.width, (float)texHair_.height };
+	Rectangle dst = { mouseWorld.x, mouseWorld.y, size, size };
+	Vector2 origin = { size / 2.0f, size / 2.0f };
+	DrawTexturePro(texHair_, src, dst, origin, 0.0f, WHITE);
 
   	for (const Rectangle &r : walls_) 
   	{
@@ -448,10 +522,15 @@ void Game::Draw()
   	player_.Draw(playerAngle_);
   
   	for (const Enemy& e : enemies_)
-	 	e.Draw();
+	{
+		Vector2 dir = Vector2Normalize(Vector2Subtract(e.position, player_.Pos()));
 
+		walterAngle_ = atan2f(dir.y, dir.x) * RAD2DEG + 270.0f;
+
+	 	e.Draw(walterAngle_);
+	}
   	for (const Bullet &b : playerBullets_)
-    		b.Draw();
+    	b.Draw();
 
   	for (const Bullet &b : enemyBullets_)
 		b.Draw();
@@ -492,6 +571,11 @@ void Game::Draw()
 
 	  	DrawText("Press R to Restart", kRenderW / 2 - 90, kRenderH / 2 + 50, 20, RAYWHITE);
   	}
+
+	if (state_ == GameState::Paused)
+	{
+		DrawPauseMenu();
+	}
   }
 
   EndTextureMode();

@@ -106,7 +106,7 @@ std::optional<Bullet> Enemy::Update(Vector2 playerPos, float dt, const std::vect
 	return std::nullopt;
 }
 
-void Enemy::Draw() const
+void Enemy::Draw(float angle) const
 {
 	if (!active)
 		return;
@@ -120,7 +120,7 @@ void Enemy::Draw() const
 		Vector2 origin = { size / 2.0f, size / 2.0f };
 		Color tint = (flashTimer > 0.0f) ? RED : WHITE;
 
-		DrawTexturePro(*sprite, src, dst, origin, 0.0f, tint);
+		DrawTexturePro(*sprite, src, dst, origin, angle, tint);
 	}
 	else 
 	{

@@ -11,4 +11,6 @@ void Input::Update() {
     dash_       = IsKeyPressed(KEY_LEFT_ALT);
     gameInfo_   = IsKeyDown(KEY_TAB);
     restart_    = IsKeyPressed(KEY_R);
+    pause_      = IsKeyPressed(KEY_ESCAPE);
+    quit_       = IsKeyPressed(KEY_Q);
 }

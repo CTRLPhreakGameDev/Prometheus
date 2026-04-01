@@ -17,6 +17,7 @@ enum class GameState
 	Playing,
 	BetweenWaves,
 	GameOver,
+	Paused,
 };
 
 struct Star
@@ -41,7 +42,9 @@ class Game {
 		void UpdateMainMenu();
 		void InitStars();
 		void UpdateStars(float dt);
+		void DrawPauseMenu();
 
+		GameState stateBeforePause_ = GameState::Playing;
 
   		Vector2 GetMouseWorldPos() const;
 
@@ -80,7 +83,11 @@ class Game {
 		Texture2D texEnemy_{};
 		Texture2D texBullet_{};
 		Texture2D texFredrick_{};
+		Texture2D texHair_{};
 		float playerAngle_ = 0.0f;
+		float walterAngle_ = 0.0f;
 
 		std::array<Star, 150> stars_;
+
+		bool shouldQuit_ = false;
 };
