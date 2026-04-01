@@ -7,8 +7,8 @@ void Game::InitStars()
 	for (Star& s : stars_)
 	{
 		s.position = { (float)(rand() % kRenderW), (float)(rand() % kRenderH) };
-		s.speed = (rand() % -10) - (rand() % 10);
-		s.radius = (s.speed > 5.5f) ? 2.0f : 1.0f;
+		s.speed = { (float)(rand() % -10) - (rand() % 10), (float)((rand() % -15) - (rand() % 10)) };
+		s.radius = (s.speed.y > 5.5f) ? 2.0f : 1.0f;
 	}
 }
 
@@ -16,8 +16,8 @@ void Game::UpdateStars(float dt)
 {
 	for (Star& s : stars_)
 	{
-		s.position.y += s.speed * dt;
-		s.position.x += ((rand() % -15) - (rand() % 10)) * dt;
+		s.position.y += s.speed.y * dt;
+		s.position.x += s.speed.x * dt;
 
 		if (s.position.y > kRenderH)
 		{
@@ -244,16 +244,19 @@ void Game::Run()
 	texBullet_ = LoadTexture("assets/sprites/bullet.png");
 	texFredrick_ = LoadTexture("assets/sprites/fredrick.png");
 	texHair_ = LoadTexture("assets/sprites/crosshair.png");
+	texBg_ = LoadTexture("assets/sprites/lvl1bg.png");
 
 	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load enemy sprite");
 	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullet sprite");
 	if (texFredrick_.width == 0) TraceLog(LOG_WARNING, "Failed to load Fredrick");
 	if (texHair_.width == 0) TraceLog(LOG_WARNING, "Failed to load the hair");
+	if (texBg_.width == 0) TraceLog(LOG_WARNING, "Failed to load the background");
 
 	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texFredrick_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texHair_, TEXTURE_FILTER_POINT);
+	SetTextureFilter(texBg_, TEXTURE_FILTER_POINT);
 
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
@@ -290,6 +293,7 @@ void Game::Run()
 	UnloadTexture(texBullet_);
 	UnloadTexture(texFredrick_);
 	UnloadTexture(texHair_);
+	UnloadTexture(texBg_);
 
 	UnloadSound(sfxShoot_);
 	UnloadSound(sfxHit_);
@@ -489,7 +493,7 @@ void Game::Draw()
 {
   BeginTextureMode(target_);
   ClearBackground({ 5, 5, 15, 255 });
-  //ClearBackground(LIGHTGRAY);
+  DrawTexture(texBg_, kRenderW / 4, kRenderH / 4, WHITE); // FIX
 
   if (state_ == GameState::MainMenu)
   {

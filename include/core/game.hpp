@@ -23,7 +23,7 @@ enum class GameState
 struct Star
 {
 	Vector2 position;
-	float speed;
+	Vector2 speed;
 	float radius;
 };
 
@@ -84,6 +84,7 @@ class Game {
 		Texture2D texBullet_{};
 		Texture2D texFredrick_{};
 		Texture2D texHair_{};
+		Texture2D texBg_{};
 		float playerAngle_ = 0.0f;
 		float walterAngle_ = 0.0f;
 
