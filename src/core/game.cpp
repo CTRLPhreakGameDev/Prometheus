@@ -8,7 +8,7 @@ void Game::InitStars()
 	{
 		s.position = { (float)(rand() % kRenderW), (float)(rand() % kRenderH) };
 		s.speed = { (float)(rand() % -10) - (rand() % 10), (float)((rand() % -15) - (rand() % 10)) };
-		s.radius = (s.speed.y > 5.5f) ? 2.0f : 1.0f;
+		s.radius = (s.speed.y > 5.5f) ? 1.0f : 1.0f;
 	}
 }
 
@@ -244,7 +244,7 @@ void Game::Run()
 	texBullet_ = LoadTexture("assets/sprites/bullet.png");
 	texFredrick_ = LoadTexture("assets/sprites/fredrick.png");
 	texHair_ = LoadTexture("assets/sprites/crosshair.png");
-	texBg_ = LoadTexture("assets/sprites/lvl1bg.png");
+	texBg_ = LoadTexture(bgTextures_[currentWorld_].c_str());
 
 	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load enemy sprite");
 	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullet sprite");
@@ -307,154 +307,154 @@ void Game::Run()
 
 void Game::Update(float dt)
 {
-  if (state_ == GameState::MainMenu || state_ == GameState::Options)
-  {
-	  UpdateMainMenu();
-	  return;
-  }
-
-  if (state_ == GameState::GameOver)
-  {
-	  if (input_.Restart())
-		  Reset();
-
-	  return;
-  }
-
-  if (input_.Pause())
-  {
-	  if (state_ == GameState::Paused)
-	  {
-		  state_ = stateBeforePause_;
-	  }
-	  else
-	  {
-		  stateBeforePause_ = state_;
-		  state_ = GameState::Paused;
-	  }
-	  return;
-  }
-
-  if (state_ == GameState::Paused && input_.Quit())
-  {
-	  
-	  shouldQuit_ = true;
-	  
-	  return;
-  }
-
-  if (state_ == GameState::Paused)
-  	return;
-
-  if (state_ == GameState::BetweenWaves)
-  {
-	  waveTimer_ -= dt;
-
-	  if (waveTimer_ <= 0.0f)
-	  {
-		  wave_++;
-		  SpawnWave();
-		  state_ = GameState::Playing;
-	  }
-
-	  player_.Update(input_, dt, walls_);
-	  camFollow_.Update(camera_, player_.Pos(), dt);
-	  return;
-  }
-
-  player_.Update(input_, dt, walls_);
-  camFollow_.Update(camera_, player_.Pos(), dt);
-
-  if (player_.hp <= 0)
-  {
-  	  PlaySound(sfxDeath_);
-	  state_ = GameState::GameOver;
-	  return;
-  }
-
-  for (Enemy& e : enemies_)
-  {
-  	if (auto shot = e.Update(player_.Pos(), dt, walls_))
+	if (state_ == GameState::MainMenu || state_ == GameState::Options)
 	{
-  		shot->sprite = &texBullet_;
-    		enemyBullets_.push_back(*shot);
-  	}
-  }
+		UpdateMainMenu();
+		return;
+	}
 
-  int scroll = (int)GetMouseWheelMove();
-  if (scroll != 0)
-  {
-	  currentWeapon_ = (currentWeapon_ - scroll + (int)weapons_.size()) % (int)weapons_.size();
-  }
+	if (state_ == GameState::GameOver)
+	{
+		if (input_.Restart())
+			Reset();
 
-  Vector2 mouseWorld = GetMouseWorldPos();
-  Vector2 dir = Vector2Normalize(Vector2Subtract(mouseWorld, player_.Pos()));
+		return;
+	}
 
-  playerAngle_ = atan2f(dir.y, dir.x) * RAD2DEG + 90.0f;
+	if (input_.Pause())
+	{
+		if (state_ == GameState::Paused)
+		{
+			state_ = stateBeforePause_;
+		}
+		else
+		{
+			stateBeforePause_ = state_;
+			state_ = GameState::Paused;
+		}
+		return;
+	}
 
-  auto newBullets = weapons_[currentWeapon_].Update(input_.AttackHeld(), player_.Pos(), dir, dt);
+	if (state_ == GameState::Paused && input_.Quit())
+	{
+		
+		shouldQuit_ = true;
+		
+		return;
+	}
 
-  if (!newBullets.empty())
-  	PlaySound(sfxShoot_);
+	if (state_ == GameState::Paused)
+		return;
 
-  for (Bullet& b : newBullets)
-	b.sprite =  &texBullet_;
+	if (state_ == GameState::BetweenWaves)
+	{
+		waveTimer_ -= dt;
 
-  playerBullets_.insert(playerBullets_.end(), newBullets.begin(), newBullets.end());
+		if (waveTimer_ <= 0.0f)
+		{
+			wave_++;
+			SpawnWave();
+			state_ = GameState::Playing;
+		}
 
-  for (Bullet &b : playerBullets_)
-    b.Update(dt, walls_);
+		player_.Update(input_, dt, walls_);
+		camFollow_.Update(camera_, player_.Pos(), dt);
+		return;
+	}
 
-  for (Bullet &b : enemyBullets_)
-    b.Update(dt, walls_);
+	player_.Update(input_, dt, walls_);
+	camFollow_.Update(camera_, player_.Pos(), dt);
 
-  Rectangle playerHb = player_.Hitbox();
+	if (player_.hp <= 0)
+	{
+		PlaySound(sfxDeath_);
+		state_ = GameState::GameOver;
+		return;
+	}
 
-  for (Bullet &b : enemyBullets_)
-  {
-    	if (b.active && CheckCollisionRecs(b.Hitbox(), playerHb))
-    	{
-	    	b.active = false;
-    		PlaySound(sfxHit_);
-  	    	player_.hp -= 10;
-    	}
-  }
+	for (Enemy& e : enemies_)
+	{
+		if (auto shot = e.Update(player_.Pos(), dt, walls_))
+		{
+			shot->sprite = &texBullet_;
+			enemyBullets_.push_back(*shot);
+		}
+	}
 
-  for (Enemy& e : enemies_)
-  {
-  	if (e.active) 
-  	{
-        	Rectangle enemyHb = e.Hitbox();
-        	for (Bullet &b : playerBullets_)
-            	if (b.active && CheckCollisionRecs(b.Hitbox(), enemyHb)) 
-	    	{
-                	b.active = false;
-                	e.hp -= weapons_[currentWeapon_].Damage();
-			e.flashTimer = 0.15f;
-            	}
-  	}
-  }
+	int scroll = (int)GetMouseWheelMove();
+	if (scroll != 0)
+	{
+		currentWeapon_ = (currentWeapon_ - scroll + (int)weapons_.size()) % (int)weapons_.size();
+	}
 
-  auto isDead = [](const Bullet& b) { return !b.active; };
+	Vector2 mouseWorld = GetMouseWorldPos();
+	Vector2 dir = Vector2Normalize(Vector2Subtract(mouseWorld, player_.Pos()));
 
-  playerBullets_.erase(std::remove_if(playerBullets_.begin(), playerBullets_.end(), isDead), playerBullets_.end());
-  enemyBullets_.erase(std::remove_if(enemyBullets_.begin(), enemyBullets_.end(), isDead), enemyBullets_.end());
+	playerAngle_ = atan2f(dir.y, dir.x) * RAD2DEG + 90.0f;
 
-  auto isDeadEnemy =[](const Enemy& e) { return !e.active; };
+	auto newBullets = weapons_[currentWeapon_].Update(input_.AttackHeld(), player_.Pos(), dir, dt);
 
-  int kills = (int)std::count_if(enemies_.begin(), enemies_.end(), isDeadEnemy);
-  score_ += kills * 100;
+	if (!newBullets.empty())
+		PlaySound(sfxShoot_);
 
-  enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), isDeadEnemy), enemies_.end());
+	for (Bullet& b : newBullets)
+		b.sprite =  &texBullet_;
 
-  if (enemies_.empty())
-  {
-	  state_ = GameState::BetweenWaves;
-	  waveTimer_ = kWaveDelay;
+	playerBullets_.insert(playerBullets_.end(), newBullets.begin(), newBullets.end());
 
-	  playerBullets_.clear();
-	  enemyBullets_.clear();
-  }
+	for (Bullet &b : playerBullets_)
+		b.Update(dt, walls_);
+
+	for (Bullet &b : enemyBullets_)
+		b.Update(dt, walls_);
+
+	Rectangle playerHb = player_.Hitbox();
+
+	for (Bullet &b : enemyBullets_)
+	{
+		if (b.active && CheckCollisionRecs(b.Hitbox(), playerHb))
+		{
+			b.active = false;
+			PlaySound(sfxHit_);
+			player_.hp -= 10;
+		}
+	}
+
+	for (Enemy& e : enemies_)
+	{
+		if (e.active) 
+		{
+			Rectangle enemyHb = e.Hitbox();
+			for (Bullet &b : playerBullets_)
+				if (b.active && CheckCollisionRecs(b.Hitbox(), enemyHb)) 
+				{
+					b.active = false;
+					e.hp -= weapons_[currentWeapon_].Damage();
+					e.flashTimer = 0.15f;
+				}
+		}
+	}
+
+	auto isDead = [](const Bullet& b) { return !b.active; };
+
+	playerBullets_.erase(std::remove_if(playerBullets_.begin(), playerBullets_.end(), isDead), playerBullets_.end());
+	enemyBullets_.erase(std::remove_if(enemyBullets_.begin(), enemyBullets_.end(), isDead), enemyBullets_.end());
+
+	auto isDeadEnemy =[](const Enemy& e) { return !e.active; };
+
+	int kills = (int)std::count_if(enemies_.begin(), enemies_.end(), isDeadEnemy);
+	score_ += kills * 100;
+
+	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), isDeadEnemy), enemies_.end());
+
+	if (enemies_.empty())
+	{
+		state_ = GameState::BetweenWaves;
+		waveTimer_ = kWaveDelay;
+
+		playerBullets_.clear();
+		enemyBullets_.clear();
+	}
 }
 
 Vector2 Game::GetMouseWorldPos() const
@@ -491,111 +491,117 @@ void Game::DrawPauseMenu()
 
 void Game::Draw()
 {
-  BeginTextureMode(target_);
-  ClearBackground({ 5, 5, 15, 255 });
-  DrawTexture(texBg_, kRenderW / 4, kRenderH / 4, WHITE); // FIX
+	BeginTextureMode(target_);
+	ClearBackground({ 5, 5, 15, 255 });
+	DrawTexture(texBg_, 0, 0, WHITE);
 
-  if (state_ == GameState::MainMenu)
-  {
-	  DrawMainMenu();
-	  ShowCursor();
-  }
-  else if (state_ == GameState::Options)
-  {
-	  DrawOptions();
-	  ShowCursor();
-  }
-  else 
-  {
-  	BeginMode2D(camera_);
-
-	HideCursor();
-
-	Vector2 mouseWorld = GetMouseWorldPos();
-	float size = 32.0f;
-	Rectangle src = { 0, 0, (float)texHair_.width, (float)texHair_.height };
-	Rectangle dst = { mouseWorld.x, mouseWorld.y, size, size };
-	Vector2 origin = { size / 2.0f, size / 2.0f };
-	DrawTexturePro(texHair_, src, dst, origin, 0.0f, WHITE);
-
-  	for (const Rectangle &r : walls_) 
-  	{
-    		DrawRectangleLinesEx(r, 1, DARKGRAY);
-  	}
-
-  	player_.Draw(playerAngle_);
-  
-  	for (const Enemy& e : enemies_)
+	if (state_ == GameState::MainMenu)
 	{
-		Vector2 dir = Vector2Normalize(Vector2Subtract(e.position, player_.Pos()));
-
-		walterAngle_ = atan2f(dir.y, dir.x) * RAD2DEG + 270.0f;
-
-	 	e.Draw(walterAngle_);
+		DrawMainMenu();
+		ShowCursor();
 	}
-  	for (const Bullet &b : playerBullets_)
-    	b.Draw();
-
-  	for (const Bullet &b : enemyBullets_)
-		b.Draw();
-
-  	EndMode2D();
-
-  	const char* waveMsg = TextFormat("Wave: %d", wave_);
-  	int waveW = MeasureText(waveMsg, 30);
-
-  	DrawText(weapons_[currentWeapon_].Name().c_str(), 10, kRenderH - 50.0f, 20, RAYWHITE);
- 	DrawHud();
-  	if (input_.GameInfo())
-  	{
-  	  	DrawText(TextFormat("Score: %d", score_), 10, 20, 20, YELLOW);
-  	}
-  	DrawText(waveMsg, kRenderW / 2 - waveW / 2, 10, 30, RAYWHITE);
-
-  	if (state_ == GameState::BetweenWaves)
-  	{
-	  	const char* msg = TextFormat("Wave %d Complete!", wave_);
-	  	int textW  = MeasureText(msg, 35);
-
-	  	DrawText(msg, kRenderW / 2 - textW / 2, kRenderH / 2 - 40, 30, GREEN);
-
-	  	const char* next = TextFormat("Next Wave in %.1f...", waveTimer_);
-	  	int nextW = MeasureText(next, 20);
-	  	DrawText(next, kRenderW / 2 - nextW / 2, kRenderH / 2, 20, RAYWHITE);
-  	}
-
-  	if (state_ == GameState::GameOver)
-  	{
-	  	DrawRectangle(0, 0, kRenderW, kRenderH, Fade(BLACK, 0.6f));
-	  	DrawText("GAME OVER", kRenderW / 2 - 90, kRenderH / 2 - 20, 40, RED);
-  	  
-	  	const char* scoreMsg = TextFormat("Final Score: %d", score_);
-	  	int scoreW = MeasureText(scoreMsg, 20);
-	  	DrawText(scoreMsg, kRenderW /2 -scoreW / 2, kRenderH / 2 + 20, 20, YELLOW);
-
-	  	DrawText("Press R to Restart", kRenderW / 2 - 90, kRenderH / 2 + 50, 20, RAYWHITE);
-  	}
-
-	if (state_ == GameState::Paused)
+	else if (state_ == GameState::Options)
 	{
-		DrawPauseMenu();
+		DrawOptions();
+		ShowCursor();
 	}
-  }
+	else 
+	{
+		for (const Star& s : stars_)
+		{
+			unsigned char alpha = (s.radius > 1.0f) ? 255 : 180;
+			DrawCircleV(s.position, s.radius, {255, 255, 255, alpha});
+		}
+		
+		BeginMode2D(camera_);
 
-  EndTextureMode();
+		HideCursor();
 
-  int sw = GetScreenWidth();
-  int sh = GetScreenHeight();
+		Vector2 mouseWorld = GetMouseWorldPos();
+		float size = 32.0f;
+		Rectangle src = { 0, 0, (float)texHair_.width, (float)texHair_.height };
+		Rectangle dst = { mouseWorld.x, mouseWorld.y, size, size };
+		Vector2 origin = { size / 2.0f, size / 2.0f };
+		DrawTexturePro(texHair_, src, dst, origin, 0.0f, WHITE);
 
-  float scale = std::min((float)sw / kRenderW, (float)sh / kRenderH);
+		for (const Rectangle &r : walls_) 
+		{
+			DrawRectangleLinesEx(r, 1, DARKGRAY);
+		}
 
-  float dstW = kRenderW * scale;
-  float dstH = kRenderH * scale;
-  float offsetX = (sw - dstW) / 2.0f;
-  float offsetY = (sh - dstH) / 2.0f;
+		player_.Draw(playerAngle_);
+	
+		for (const Enemy& e : enemies_)
+		{
+			Vector2 dir = Vector2Normalize(Vector2Subtract(e.position, player_.Pos()));
 
-  Rectangle src = { 0.0f, 0.0f, (float)kRenderW, -(float)kRenderH };
-  Rectangle dst = { offsetX, offsetY, dstW, dstH };
+			walterAngle_ = atan2f(dir.y, dir.x) * RAD2DEG + 270.0f;
 
-  DrawTexturePro(target_.texture, src, dst, {0.0f, 0.0f}, 0.0f, WHITE);
+			e.Draw(walterAngle_);
+		}
+		for (const Bullet &b : playerBullets_)
+			b.Draw();
+
+		for (const Bullet &b : enemyBullets_)
+			b.Draw();
+
+		EndMode2D();
+
+		const char* waveMsg = TextFormat("Wave: %d", wave_);
+		int waveW = MeasureText(waveMsg, 30);
+
+		DrawText(weapons_[currentWeapon_].Name().c_str(), 10, kRenderH - 50.0f, 20, RAYWHITE);
+		DrawHud();
+		if (input_.GameInfo())
+		{
+			DrawText(TextFormat("Score: %d", score_), 10, 20, 20, YELLOW);
+		}
+		DrawText(waveMsg, kRenderW / 2 - waveW / 2, 10, 30, RAYWHITE);
+
+		if (state_ == GameState::BetweenWaves)
+		{
+			const char* msg = TextFormat("Wave %d Complete!", wave_);
+			int textW  = MeasureText(msg, 35);
+
+			DrawText(msg, kRenderW / 2 - textW / 2, kRenderH / 2 - 40, 30, GREEN);
+
+			const char* next = TextFormat("Next Wave in %.1f...", waveTimer_);
+			int nextW = MeasureText(next, 20);
+			DrawText(next, kRenderW / 2 - nextW / 2, kRenderH / 2, 20, RAYWHITE);
+		}
+
+		if (state_ == GameState::GameOver)
+		{
+			DrawRectangle(0, 0, kRenderW, kRenderH, Fade(BLACK, 0.6f));
+			DrawText("GAME OVER", kRenderW / 2 - 90, kRenderH / 2 - 20, 40, RED);
+		
+			const char* scoreMsg = TextFormat("Final Score: %d", score_);
+			int scoreW = MeasureText(scoreMsg, 20);
+			DrawText(scoreMsg, kRenderW /2 -scoreW / 2, kRenderH / 2 + 20, 20, YELLOW);
+
+			DrawText("Press R to Restart", kRenderW / 2 - 90, kRenderH / 2 + 50, 20, RAYWHITE);
+		}
+
+		if (state_ == GameState::Paused)
+		{
+			DrawPauseMenu();
+		}
+	}
+
+	EndTextureMode();
+
+	int sw = GetScreenWidth();
+	int sh = GetScreenHeight();
+
+	float scale = std::min((float)sw / kRenderW, (float)sh / kRenderH);
+
+	float dstW = kRenderW * scale;
+	float dstH = kRenderH * scale;
+	float offsetX = (sw - dstW) / 2.0f;
+	float offsetY = (sh - dstH) / 2.0f;
+
+	Rectangle src = { 0.0f, 0.0f, (float)kRenderW, -(float)kRenderH };
+	Rectangle dst = { offsetX, offsetY, dstW, dstH };
+
+	DrawTexturePro(target_.texture, src, dst, {0.0f, 0.0f}, 0.0f, WHITE);
 }

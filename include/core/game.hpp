@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/input/input.hpp"
+#include "core/worlds/world.hpp"
 #include "gameplay/bullet/bullet.hpp"
 #include "gameplay/weapon/weapon.hpp"
 #include "gameplay/enemies/common.hpp"
@@ -9,6 +10,7 @@
 #include "raylib.h"
 #include <vector>
 #include <array>
+#include <string>
 
 enum class GameState
 {
@@ -16,6 +18,7 @@ enum class GameState
 	Options,
 	Playing,
 	BetweenWaves,
+	BetweenWorlds,
 	GameOver,
 	Paused,
 };
@@ -27,7 +30,15 @@ struct Star
 	float radius;
 };
 
-class Game {
+struct World
+{
+    int worldID {0};
+    int difficulty {0};
+    int maxWaves {10};
+};
+
+class Game 
+{
 	public:
   		void Run();
 
@@ -43,6 +54,7 @@ class Game {
 		void InitStars();
 		void UpdateStars(float dt);
 		void DrawPauseMenu();
+		void WorldSelect(int world);
 
 		GameState stateBeforePause_ = GameState::Playing;
 
@@ -51,6 +63,9 @@ class Game {
   		RenderTexture2D target_;
   		static constexpr int kRenderW = 800;
   		static constexpr int kRenderH = 450;
+
+		std::vector<std::string> bgTextures_ = { "", "assets/sprites/worlds/lvl1bg.png", "assets/sprites/worlds/lvl2bg.png" };
+		int currentWorld_ = 0;
 
   		Camera2D camera_{};
   		CameraFollow camFollow_{};
