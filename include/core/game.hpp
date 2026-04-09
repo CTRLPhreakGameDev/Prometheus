@@ -30,13 +30,6 @@ struct Star
 	float radius;
 };
 
-struct World
-{
-    int worldID {0};
-    int difficulty {0};
-    int maxWaves {10};
-};
-
 class Game 
 {
 	public:
