@@ -357,7 +357,7 @@ void Game::Run()
 		Weapon({"Pistol", 400.0f, 0.3f, 4.0f, 3.0f, 1, 0.0f, 10}),
 		Weapon({"Shotgun", 350.0f, 1.2f, 4.5f, 2.0f, 6, 30.0f, 8}),
 		Weapon({"Super MEGA Gun", 500.0f, 0.08f, 3.0f, 2.0f, 1, 0.0f, 5}),
-		//Weapon({"Deletifier", 1000.0f, 0.0f, 5.0f, 10.0f, 1, 0.0f, 1000}),
+		Weapon({"Deletifier", 1000.0f, 0.0f, 5.0f, 10.0f, 1, 0.0f, 1000}),
 	};
 
 	worlds_ = {
@@ -371,7 +371,7 @@ void Game::Run()
 		},
 		WorldConfig{
 			/*name*/"SEC 2",
-			/*bgTexture*/"assets/sprites/lvl1bg.png",
+			/*bgTexture*/"assets/sprites/lvl2bg.png",
 			/*maxWaves*/6,
 			/*enemySpeedMult*/1.25f,
 			/*enemyHpBase*/100,
@@ -379,7 +379,7 @@ void Game::Run()
 		},
 		WorldConfig{
 			/*name*/"SEC 3",
-			/*bgTexture*/"assets/sprites/lvl1bg.png",
+			/*bgTexture*/"assets/sprites/lvl3bg.png",
 			/*maxWaves*/10,
 			/*enemySpeedMult*/1.5f,
 			/*enemyHpBase*/130,
@@ -387,7 +387,7 @@ void Game::Run()
 		},
 		WorldConfig{
 			/*name*/"SEC 4",
-			/*bgTexture*/"assets/sprites/lvl1bg.png",
+			/*bgTexture*/"assets/sprites/lvl4bg.png",
 			/*maxWaves*/15,
 			/*enemySpeedMult*/1.75f,
 			/*enemyHpBase*/170,
