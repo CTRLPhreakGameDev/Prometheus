@@ -13,4 +13,5 @@ void Input::Update() {
     restart_    = IsKeyPressed(KEY_R);
     pause_      = IsKeyPressed(KEY_ESCAPE);
     quit_       = IsKeyPressed(KEY_Q);
+    enter_      = IsKeyPressed(KEY_ENTER);
 }

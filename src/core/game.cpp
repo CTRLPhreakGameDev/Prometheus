@@ -211,11 +211,11 @@ void Game::DrawBetweenWorlds()
 	int titleW = MeasureText(title, 36);
 	DrawText(title, kRenderW / 2 - titleW / 2, 100, 36, GREEN);
 
-	const char* wScore = TextFormat("World Score: %s", worldScore_);
+	const char* wScore = TextFormat("World Score: %d", worldScore_);
 	int wScoreW = MeasureText(wScore, 22);
 	DrawText(wScore, kRenderW / 2 - wScoreW / 2, 175, 22, YELLOW);
 
-	const char* tScore = TextFormat("Total Score: %s", score_);
+	const char* tScore = TextFormat("Total Score: %d", score_);
 	int tScoreW = MeasureText(tScore, 22);
 	DrawText(tScore, kRenderW / 2 - tScoreW / 2, 210, 22, RAYWHITE);
 
@@ -234,7 +234,7 @@ void Game::DrawBetweenWorlds()
 
 	const char* prompt = "Press ENTER to Continue";
 	int promptW = MeasureText(prompt, 18);
-	DrawText(prompt, kRenderW / 2 - promptW / 2, 275, 18, Fade(RAYWHITE, 0.75f));
+	DrawText(prompt, kRenderW / 2 - promptW / 2, 300, 18, Fade(RAYWHITE, 0.75f));
 }
 
 void Game::SpawnWave()
@@ -244,7 +244,7 @@ void Game::SpawnWave()
 	const WorldConfig& world = worlds_[currentWorld_];
 
 	int count = std::min(2 + (wave_ - 1), 10);
-	float speed = world.enemySpeedMult * std::min(80.0f + wave_, 15.0f, 220.0f);
+	float speed = world.enemySpeedMult * std::min(80.0f + wave_ * 15.0f, 220.0f);
 	int hp = world.enemyHpBase + wave_ * 10;
 
 	std::vector<Vector2> spawnPoints = {
@@ -266,19 +266,32 @@ void Game::SpawnWave()
 
 		Enemy e;
 
-		switch
+		switch (currentWorld_)
 		{
-			case: (currentWorld_ == 0)
+			case 0:
 				e = MakeBasicEnemy(pos, speed, hp);
 				break;
 			
-			case: (currentWorld_ == 1)
-				e = (i % 2 = 0) ? MakeBasicEnemy(pos, speed, hp) : MakeFastEnemy(pos, speed, hp);
+			case 1:
+				e = (i % 2 == 0) ? MakeBasicEnemy(pos, speed, hp) : MakeFastEnemy(pos, speed, hp);
 				break;
-			case: (currentWorld_ == 2)
-				if (i ) d //finish
 
+			case 2:
+				if (i % 3 == 0) 
+					e = MakeTankEnemy(pos, speed, hp);
+				else if (i % 3 == 1)
+					e = MakeFastEnemy(pos, speed, hp);
+				else
+					e = MakeBasicEnemy(pos, speed, hp);
+				break;
+
+			default:
+				e = (i % 2 == 0) ? MakeTankEnemy(pos, speed, hp) : MakeFastEnemy(pos, speed, hp);
+				break;
 		}
+
+		e.sprite = &texEnemy_;
+		enemies_.push_back(e);
 	}
 }
 
@@ -291,10 +304,13 @@ void Game::Reset()
 	playerBullets_.clear();
 	enemyBullets_.clear();
 	currentWeapon_ = 0;
-	state_ = GameState::Playing;
 	wave_ = 1;
 	score_ = 0;
+	worldScore_ = 0;
+	currentWorld_ = 0;
+	state_ = GameState::Playing;
 
+	AdvanceWorld();
 	SpawnWave();
 }
 
@@ -319,19 +335,16 @@ void Game::Run()
 	texBullet_ = LoadTexture("assets/sprites/bullet.png");
 	texFredrick_ = LoadTexture("assets/sprites/fredrick.png");
 	texHair_ = LoadTexture("assets/sprites/crosshair.png");
-	texBg_ = LoadTexture(bgTextures_[currentWorld_].c_str());
 
 	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load enemy sprite");
 	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullet sprite");
 	if (texFredrick_.width == 0) TraceLog(LOG_WARNING, "Failed to load Fredrick");
 	if (texHair_.width == 0) TraceLog(LOG_WARNING, "Failed to load the hair");
-	if (texBg_.width == 0) TraceLog(LOG_WARNING, "Failed to load the background");
 
 	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texFredrick_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texHair_, TEXTURE_FILTER_POINT);
-	SetTextureFilter(texBg_, TEXTURE_FILTER_POINT);
 
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
@@ -344,6 +357,42 @@ void Game::Run()
 		Weapon({"Pistol", 400.0f, 0.3f, 4.0f, 3.0f, 1, 0.0f, 10}),
 		Weapon({"Shotgun", 350.0f, 1.2f, 4.5f, 2.0f, 6, 30.0f, 8}),
 		Weapon({"Super MEGA Gun", 500.0f, 0.08f, 3.0f, 2.0f, 1, 0.0f, 5}),
+		Weapon({"Deletifier", 1000.0f, 0.0f, 5.0f, 10.0f, 1, 0.0f, 1000}),
+	};
+
+	worlds_ = {
+		WorldConfig{
+			/*name*/"SEC 1",
+			/*bgTexture*/"assets/sprites/lvl1bg.png",
+			/*maxWaves*/3,
+			/*enemySpeedMult*/1.0f,
+			/*enemyHpBase*/80,
+			/*walls*/{ {100, 200, 300, 30}, {500, 120, 40, 220} }
+		},
+		WorldConfig{
+			/*name*/"SEC 2",
+			/*bgTexture*/"assets/sprites/lvl1bg.png",
+			/*maxWaves*/6,
+			/*enemySpeedMult*/1.25f,
+			/*enemyHpBase*/100,
+			/*walls*/{ {-300, 100, 40, 300}, {200, -200, 250, 30}, {400, 300, 30, 200} }
+		},
+		WorldConfig{
+			/*name*/"SEC 3",
+			/*bgTexture*/"assets/sprites/lvl1bg.png",
+			/*maxWaves*/10,
+			/*enemySpeedMult*/1.5f,
+			/*enemyHpBase*/130,
+			/*walls*/{ {0, 300, 500, 20}, {-400, -100, 30, 400}, {300, -300, 200, 30} }
+		},
+		WorldConfig{
+			/*name*/"SEC 4",
+			/*bgTexture*/"assets/sprites/lvl1bg.png",
+			/*maxWaves*/15,
+			/*enemySpeedMult*/1.75f,
+			/*enemyHpBase*/170,
+			/*walls*/{ {-200, 200, 400, 25}, {200, -200, 25, 400}, {-300, -300, 300, 25} }
+		},
 	};
 
 	InitStars();
@@ -368,7 +417,8 @@ void Game::Run()
 	UnloadTexture(texBullet_);
 	UnloadTexture(texFredrick_);
 	UnloadTexture(texHair_);
-	UnloadTexture(texBg_);
+	if (texBg_.width > 0)
+		UnloadTexture(texBg_);
 
 	UnloadSound(sfxShoot_);
 	UnloadSound(sfxHit_);
@@ -396,6 +446,27 @@ void Game::Update(float dt)
 		return;
 	}
 
+	if (state_ == GameState::BetweenWorlds)
+	{
+		if (input_.Enter())
+		{
+			if (currentWorld_ < (int)worlds_.size())
+			{
+				wave_ = 1;
+				worldScore_ = 0;
+				AdvanceWorld();
+				SpawnWave();
+				state_ = GameState::Playing;
+			}
+			else
+			{
+				state_ = GameState::MainMenu;
+			}
+		}
+		
+		return;
+	}
+
 	if (input_.Pause())
 	{
 		if (state_ == GameState::Paused)
@@ -407,6 +478,7 @@ void Game::Update(float dt)
 			stateBeforePause_ = state_;
 			state_ = GameState::Paused;
 		}
+
 		return;
 	}
 
@@ -428,12 +500,22 @@ void Game::Update(float dt)
 		if (waveTimer_ <= 0.0f)
 		{
 			wave_++;
-			SpawnWave();
-			state_ = GameState::Playing;
+			
+			if (wave_ > worlds_[currentWorld_].maxWaves)
+			{
+				currentWorld_++;
+				state_ = GameState::BetweenWorlds;
+			}
+			else
+			{
+				SpawnWave();
+				state_ = GameState::Playing;
+			}
 		}
 
 		player_.Update(input_, dt, walls_);
 		camFollow_.Update(camera_, player_.Pos(), dt);
+
 		return;
 	}
 
@@ -519,6 +601,7 @@ void Game::Update(float dt)
 
 	int kills = (int)std::count_if(enemies_.begin(), enemies_.end(), isDeadEnemy);
 	score_ += kills * 100;
+	worldScore_ += kills * 100;
 
 	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), isDeadEnemy), enemies_.end());
 
@@ -568,7 +651,9 @@ void Game::Draw()
 {
 	BeginTextureMode(target_);
 	ClearBackground({ 5, 5, 15, 255 });
-	DrawTexture(texBg_, 0, 0, WHITE);
+
+	if (texBg_.width > 0)
+		DrawTexture(texBg_, 0, 0, WHITE);
 
 	if (state_ == GameState::MainMenu)
 	{
@@ -578,6 +663,16 @@ void Game::Draw()
 	else if (state_ == GameState::Options)
 	{
 		DrawOptions();
+		ShowCursor();
+	}
+	else if (state_ == GameState::BetweenWorlds)
+	{
+		for (const Star& s : stars_)
+		{
+			unsigned char alpha = (s.radius > 1.0f) ? 255 : 180;
+			DrawCircleV(s.position, s.radius, {255, 255, 255, alpha});
+		}
+		DrawBetweenWorlds();
 		ShowCursor();
 	}
 	else 

@@ -18,8 +18,9 @@ if (NOT raylib_FOUND)
   FetchContent_Declare(
     raylib
     GIT_REPOSITORY https://github.com/raysan5/raylib.git
-    GIT_TAG 5.0
+    GIT_TAG 5.5
   )
+  set(CMAKE_POLICY_DEFAULT_CMP0048 NEW)
   FetchContent_MakeAvailable(raylib)
 endif()
 

@@ -15,6 +15,7 @@ public:
     bool Restart()    const { return restart_; }
     bool Pause()      const { return pause_; }
     bool Quit()       const { return quit_; }
+    bool Enter()      const { return enter_; }
 
 private:
     bool left_ = false, right_ = false, up_ = false, down_ = false;
@@ -30,4 +31,6 @@ private:
     bool pause_ = false;
     
     bool quit_ = false;
+
+    bool enter_ = false;
 };

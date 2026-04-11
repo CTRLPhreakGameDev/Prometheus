@@ -9,7 +9,7 @@ struct WorldConfig
     std::string name;
     std::string bgTexture;
     int maxWaves;
-    int enemySpeedMult;
+    float enemySpeedMult;
     int enemyHpBase;
     std::vector<Rectangle> walls;
 };

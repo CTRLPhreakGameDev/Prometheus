@@ -151,7 +151,7 @@ Enemy MakeFastEnemy(Vector2 pos, float speed, int hp)
 
 Enemy MakeTankEnemy(Vector2 pos, float speed, int hp)
 {
-	Enemy e {pos, speed * 0.5, 24.0f};
+	Enemy e {pos, speed * 0.5f, 24.0f};
 	e.hp = hp * 3;
 	e.shootRange = 320.0f;
 	e.shootCooldown = 1.8f;
