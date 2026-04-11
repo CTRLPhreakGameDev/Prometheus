@@ -37,3 +37,7 @@ struct Enemy
 		return { position.x - radius, position.y - radius, radius * 2, radius * 2 };
 	}
 };
+
+Enemy MakeBasicEnemy(Vector2 pos, float speed, int hp);
+Enemy MakeFastEnemy(Vector2 pos, float speed, int hp);
+Enemy MakeTankEnemy(Vector2 pos, float speed, int hp);

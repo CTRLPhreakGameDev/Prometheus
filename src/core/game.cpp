@@ -53,6 +53,28 @@ static bool MouseOverRect(Rectangle r)
 	return CheckCollisionPointRec(rPos, r);
 }
 
+void Game::AdvanceWorld()
+{
+	if (texBg_.width > 0)
+		UnloadTexture(texBg_);
+
+	const WorldConfig& w = worlds_[currentWorld_];
+
+	if (!w.bgTexture.empty())
+	{
+		texBg_ = LoadTexture(w.bgTexture.c_str());
+		SetTextureFilter(texBg_, TEXTURE_FILTER_POINT);
+		if (texBg_.width == 0)
+			TraceLog(LOG_WARNING, "Failed to load bg %s", w.bgTexture.c_str());
+	}
+	else
+	{
+		texBg_ = {};
+	}
+	
+	walls_ = w.walls;
+}
+
 void Game::UpdateMainMenu()
 {
 	Rectangle playRect = { 300, 180, 200, 36 };
@@ -179,12 +201,51 @@ void Game::DrawHud()
 	DrawRectangleLinesEx({x, y, barWidth, barHeight}, 1, RAYWHITE);
 }
 
+void Game::DrawBetweenWorlds()
+{
+	DrawRectangle(0, 0, kRenderW, kRenderH, Fade(BLACK, 0.75f));
+
+	const WorldConfig& finishedWorld = worlds_[currentWorld_ - 1];
+
+	const char* title = TextFormat("%s - Complete!", finishedWorld.name.c_str());
+	int titleW = MeasureText(title, 36);
+	DrawText(title, kRenderW / 2 - titleW / 2, 100, 36, GREEN);
+
+	const char* wScore = TextFormat("World Score: %s", worldScore_);
+	int wScoreW = MeasureText(wScore, 22);
+	DrawText(wScore, kRenderW / 2 - wScoreW / 2, 175, 22, YELLOW);
+
+	const char* tScore = TextFormat("Total Score: %s", score_);
+	int tScoreW = MeasureText(tScore, 22);
+	DrawText(tScore, kRenderW / 2 - tScoreW / 2, 210, 22, RAYWHITE);
+
+	if (currentWorld_ < (int)worlds_.size())
+	{
+		const char* next = TextFormat("Up Next: %s", worlds_[currentWorld_].name.c_str());
+		int nextW = MeasureText(next, 20);
+		DrawText(next, kRenderW / 2 - nextW / 2, 275, 20, LIGHTGRAY);
+	}
+	else
+	{
+		const char* fin = "We Reached the planet!";
+		int finW = MeasureText(fin, 20);
+		DrawText(fin, kRenderW / 2 - finW / 2, 275, 20, GOLD);
+	}
+
+	const char* prompt = "Press ENTER to Continue";
+	int promptW = MeasureText(prompt, 18);
+	DrawText(prompt, kRenderW / 2 - promptW / 2, 275, 18, Fade(RAYWHITE, 0.75f));
+}
+
 void Game::SpawnWave()
 {
 	enemies_.clear();
 
+	const WorldConfig& world = worlds_[currentWorld_];
+
 	int count = std::min(2 + (wave_ - 1), 10);
-	float speed = std::min(80.0f + wave_ * 15.0f, 220.0f);
+	float speed = world.enemySpeedMult * std::min(80.0f + wave_, 15.0f, 220.0f);
+	int hp = world.enemyHpBase + wave_ * 10;
 
 	std::vector<Vector2> spawnPoints = {
 		{ 900.0f,  500.0f},
@@ -201,9 +262,23 @@ void Game::SpawnWave()
 
 	for (int i = 0; i < count; i++)
 	{
-		Enemy e{spawnPoints[i % spawnPoints.size()], speed, 16.0f};
-		e.sprite =  &texEnemy_;
-		enemies_.push_back(e);
+		Vector2 pos = spawnPoints[i % spawnPoints.size()];
+
+		Enemy e;
+
+		switch
+		{
+			case: (currentWorld_ == 0)
+				e = MakeBasicEnemy(pos, speed, hp);
+				break;
+			
+			case: (currentWorld_ == 1)
+				e = (i % 2 = 0) ? MakeBasicEnemy(pos, speed, hp) : MakeFastEnemy(pos, speed, hp);
+				break;
+			case: (currentWorld_ == 2)
+				if (i ) d //finish
+
+		}
 	}
 }
 

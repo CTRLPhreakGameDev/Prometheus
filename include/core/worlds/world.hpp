@@ -2,10 +2,14 @@
 
 #include "raylib.h"
 #include <vector>
+#include <string>
 
-struct World
+struct WorldConfig
 {
-    int worldID {0};
-    int difficulty {0};
-    int maxWaves {10};
+    std::string name;
+    std::string bgTexture;
+    int maxWaves;
+    int enemySpeedMult;
+    int enemyHpBase;
+    std::vector<Rectangle> walls;
 };

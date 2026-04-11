@@ -130,3 +130,30 @@ void Enemy::Draw(float angle) const
 
 	DrawCircleLines((int)position.x, (int)position.y, shootRange, Fade(DARKPURPLE, 0.15f));
 }
+
+Enemy MakeBasicEnemy(Vector2 pos, float speed, int hp)
+{
+	Enemy e {pos, speed, 16.0f};
+	e.hp = hp;
+	e.shootRange = 250.0f;
+	e.shootCooldown = 1.0f;
+	return e;
+}
+
+Enemy MakeFastEnemy(Vector2 pos, float speed, int hp)
+{
+	Enemy e {pos, speed * 1.6f, 10.0f};
+	e.hp = hp / 2;
+	e.shootRange = 200.0f;
+	e.shootCooldown = 0.6f;
+	return e;
+}
+
+Enemy MakeTankEnemy(Vector2 pos, float speed, int hp)
+{
+	Enemy e {pos, speed * 0.5, 24.0f};
+	e.hp = hp * 3;
+	e.shootRange = 320.0f;
+	e.shootCooldown = 1.8f;
+	return e;
+}

@@ -47,7 +47,8 @@ class Game
 		void InitStars();
 		void UpdateStars(float dt);
 		void DrawPauseMenu();
-		void WorldSelect(int world);
+		void DrawBetweenWorlds();
+		void AdvanceWorld();
 
 		GameState stateBeforePause_ = GameState::Playing;
 
@@ -57,7 +58,7 @@ class Game
   		static constexpr int kRenderW = 800;
   		static constexpr int kRenderH = 450;
 
-		std::vector<std::string> bgTextures_ = { "", "assets/sprites/worlds/lvl1bg.png", "assets/sprites/worlds/lvl2bg.png" };
+		std::vector<WorldConfig> worlds_;
 		int currentWorld_ = 0;
 
   		Camera2D camera_{};
@@ -68,7 +69,7 @@ class Game
 		std::vector<Enemy> enemies_;
 
 
- 		std::vector<Rectangle> walls_ = {{100, 200, 300, 30}, {500, 120, 40, 220}};
+ 		std::vector<Rectangle> walls_;
 
   		std::vector<Weapon> weapons_;
   		int currentWeapon_ = 0;
@@ -81,6 +82,7 @@ class Game
 		int wave_ = 1;
 		float waveTimer_ = 0.0f;
 		int score_ = 0;
+		int worldScore_ = 0;
 
 		static constexpr float kWaveDelay = 3.0f;
 
