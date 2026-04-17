@@ -1,24 +1,97 @@
 #include "gameplay/enemies/common.hpp"
 #include <cmath>
+#include <algorithm>
 
-static float VectorLengthCustom(Vector2 v)
+static float VLen(Vector2 v)
 {
 	return std::sqrt(v.x * v.x + v.y * v.y);
 }
 
-static Vector2 NormalizeSafe(Vector2 v)
+static Vector2 VNorm(Vector2 v)
 {
-	float len {VectorLengthCustom(v)};
+	float len {VLen(v)};
 	if (len <= 0.0001f)
-		return {0.f, 0.0f};
+		return {0.f, 0.f};
 	return { v.x / len, v.y / len };
 }
+
+static Vector2 VScale(Vector2 v, float s) { return { v.x * s, v.y * s }; }
+static Vector2 VAdd(Vector2 a, Vector2 b) { return { a.x + b.x, a.y + b.y }; }
+static float VDot(Vector2 a, Vector2 b) { return { a.x * b.x + a.y * b.y }; }
+static Vector2 VPerp(Vector2 v) { return { -v.y, v.x }; }
 
 Enemy::Enemy(Vector2 startPos, float moveSpeed, float size)
 {
 	position = {startPos};
 	speed = {moveSpeed};
 	radius = {size};
+}
+
+Vector2 Enemy::SteerSeek(Vector2 playerPos) const
+{
+	return VNorm({ playerPos.x - position.x, playerPos.y - position.y });
+}
+
+Vector2 Enemy::SteerFlee(Vector2 playerPos) const
+{
+	return VNorm({ position.x - playerPos.x, position.y - playerPos.y });
+}
+
+Vector2 Enemy::SteerOrbit(Vector2 playerPos) const
+{
+	Vector2 toPlayer = VNorm({ playerPos.x - position.x, playerPos.y - position.y });
+	Vector2 tangent =  VPerp(toPlayer);
+
+	float dist = VLen({ playerPos.x - position.x, playerPos.y - position.y });
+	float rangeDiff = dist - ai.preferredRange;
+	Vector2 radial = VScale(toPlayer, rangeDiff * 0.01f);
+
+	return VNorm(VAdd(tangent, radial));
+}
+
+Vector2 Enemy::SteerSeparation(const std::vector<Enemy>& allEnemies) const
+{
+	Vector2 force{0.f, 0.f};
+
+	for{const Enemy& other : allEnemies}
+	{
+		if (&other == this || !other.active) continue;
+
+		float dx = position.x - other.position.x;
+		float dy = position.y - other.position.y;
+		float dist = Vlen({dx, dy});
+
+		if (dist < ai.separationRadius && dist > 0.001f)
+		{
+			float strength = 1.0f - (dist / ai.separationRadius);
+			force = VAdd(force, VScale({dx / dist, dy / dist}, strength));
+		}
+	}
+
+	return VNorm(force);
+}
+
+Vector2 Enemy::SteerWallAvoid(const std::vector<Rectangle>& walls) const
+{
+	static constexpr int kDirs = 8;
+	static constexpr float kAngles[kDirs] = { 0, 45, 90, 135, 180, 225, 270, 315 };
+
+	Vector2 avoidance{0.f, 0.f};
+
+	for (const Rectangle& wall : walls)
+	{
+		float cx = std::clamp(position.x, wall.x, wall.x + wall.width);
+		float cy = std::clamp(position.y, wall.y, wall.y + wall.height);
+		float dx = position.x - cx;
+		float dy = position.y - cy;
+		float dist = VLen({dx, dy});
+
+		if (dist < ai.wallFeelerLen && dist > 0.001f)
+		{
+			float strength = 1.0f - (dist / ai.wallFeelerLen);
+			avoidance = VAdd(avoidance)
+		}
+	}
 }
 
 Vector2 Enemy::GetDirectionToPlayer(Vector2 playerPos) const
