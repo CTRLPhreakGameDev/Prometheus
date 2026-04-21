@@ -41,7 +41,7 @@ struct Enemy
 	Enemy() = default;
 	Enemy(Vector2 startPos, float moveSpeed, float size);
 
-	std::optional<Bullet> Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls, const std::vector<Enemy>& allEemies);
+	std::optional<Bullet> Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls, const std::vector<Enemy>& allEnemies);
 	void Draw(float angle) const;
 
 	Vector2 GetDirectionToPlayer(Vector2 playerPos) const;

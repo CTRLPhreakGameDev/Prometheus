@@ -532,7 +532,7 @@ void Game::Update(float dt)
 
 	for (Enemy& e : enemies_)
 	{
-		if (auto shot = e.Update(player_.Pos(), dt, walls_))
+		if (auto shot = e.Update(player_.Pos(), dt, walls_, enemies_))
 		{
 			shot->sprite = &texBullet_;
 			enemyBullets_.push_back(*shot);
