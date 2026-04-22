@@ -154,38 +154,40 @@ Vector2 Enemy::SteerSeparation(const std::vector<Enemy>& allEnemies) const
 
 Vector2 Enemy::SteerWallAvoid(const std::vector<Rectangle>& walls) const
 {
-    Vector2 avoidance{ 0.0f, 0.0f };
+	Vector2 moveDir = SteerSeek(GetDirectionToPlayer(position));
 
-    for (const Rectangle& wall : walls)
-    {
-        float closestX = std::clamp(position.x, wall.x, wall.x + wall.width);
-        float closestY = std::clamp(position.y, wall.y, wall.y + wall.height);
+	float angle = 30 * DEG2RAD;
+	Vector2 feelers[3] = {
+		VScale({ moveDir.x * cosf(angle) - moveDir.y * sinf(angle), moveDir.x * sinf(angle) + moveDir.y * cosf(angle) }, ai.wallFeelerLen * 0.7f),
+		VScale(moveDir, ai.wallFeelerLen),
+		VScale({ moveDir.x * cosf(-angle) - moveDir.y * sinf(-angle), moveDir.x * sinf(-angle) + moveDir.y * cosf(-angle) }, ai.wallFeelerLen * 0.7f)
+	};
 
-        float dx = position.x - closestX;
-        float dy = position.y - closestY;
+    Vector2 totalAvoidance{ 0.0f, 0.0f };
 
-        float dist = VLen({ dx, dy });
+	for (const Vector2 f : feelers)
+	{
+		Vector2 feelerPos = VAdd(position, f);
 
-        if (dist > 0.0f && dist < ai.wallFeelerLen)
-        {
-            float strength = 1.0f - (dist / ai.wallFeelerLen);
-            Vector2 push = VScale(VNorm({ dx, dy }), strength);
-            avoidance = VAdd(avoidance, push);
-        }
-    }
+    	for (const Rectangle& wall : walls)
+		{
+			if (CheckCollisionPointRec(feelerPos, wall))
+			{
+				Vector2 wallCenter = { wall.x + wall.width / 2.0f, wall.y + wall.height / 2.0f };
+				Vector2 push = VNorm(VSub(position, wallCenter));
+				totalAvoidance = VAdd(totalAvoidance, push);
+			}
+		}
+	}
 
-    return VNorm(avoidance);
+    return VNorm(totalAvoidance);
 }
 
 // ------------------------------------------------------
 // Update
 // ------------------------------------------------------
 
-std::optional<Bullet> Enemy::Update(
-    Vector2 playerPos,
-    float dt,
-    const std::vector<Rectangle>& walls,
-    const std::vector<Enemy>& allEnemies)
+std::optional<Bullet> Enemy::Update(Vector2 playerPos, float dt, const std::vector<Rectangle>& walls, const std::vector<Enemy>& allEnemies)
 {
     if (!active)
         return std::nullopt;
@@ -212,16 +214,20 @@ std::optional<Bullet> Enemy::Update(
     Vector2 wallAvoid = SteerWallAvoid(walls);
 
     float distToPlayer = VLen(VSub(playerPos, position));
+    float avoidMagnitude = VLen(wallAvoid);
 
     Vector2 flee{ 0.0f, 0.0f };
     if (distToPlayer < ai.fleeRadius)
         flee = SteerFlee(playerPos);
 
     Vector2 steering{ 0.0f, 0.0f };
-    steering = VAdd(steering, VScale(seek, ai.seek));
+
+    float seekWeight = (avoidMagnitude > 0.0f) ? (ai.seek * 0.2f) : ai.seek;
+
+    steering = VAdd(steering, VScale(seek, seekWeight));
     steering = VAdd(steering, VScale(orbit, ai.orbit));
     steering = VAdd(steering, VScale(separation, ai.separation));
-    steering = VAdd(steering, VScale(wallAvoid, ai.wallAvoid));
+    steering = VAdd(steering, VScale(wallAvoid, ai.wallAvoid * 2.0f));
     steering = VAdd(steering, VScale(flee, ai.flee));
 
     Vector2 moveDir = VNorm(steering);
