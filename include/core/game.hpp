@@ -2,6 +2,7 @@
 
 #include "core/input/input.hpp"
 #include "core/worlds/world.hpp"
+#include "core/missions/mission.hpp"
 #include "gameplay/bullet/bullet.hpp"
 #include "gameplay/weapon/weapon.hpp"
 #include "gameplay/enemies/common.hpp"
@@ -39,7 +40,7 @@ class Game
   		void Update(float dt);
   		void Draw();
 		void Reset();
-		void SpawnWave();
+		void StartMission();
 		void DrawHud();
 		void DrawMainMenu();
 		void DrawOptions();
@@ -79,8 +80,9 @@ class Game
 
 		GameState state_ = GameState::MainMenu;
 
-		int wave_ = 1;
-		float waveTimer_ = 0.0f;
+		int currentMission_ = 0;
+		MissionState activeMission_;
+		float missionEndTimer_ = 0;
 		int score_ = 0;
 		int worldScore_ = 0;
 

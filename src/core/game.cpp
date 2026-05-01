@@ -1,6 +1,7 @@
 #include "core/game.hpp"
 #include <algorithm>
 #include <cmath>
+#include <functional>
 
 void Game::InitStars()
 {
@@ -237,62 +238,24 @@ void Game::DrawBetweenWorlds()
 	DrawText(prompt, kRenderW / 2 - promptW / 2, 300, 18, Fade(RAYWHITE, 0.75f));
 }
 
-void Game::SpawnWave()
+void Game::StartMission()
 {
-	enemies_.clear();
-
 	const WorldConfig& world = worlds_[currentWorld_];
-
-	int count = std::min(2 + (wave_ - 1), 10);
-	float speed = world.enemySpeedMult * std::min(80.0f + wave_ * 15.0f, 220.0f);
-	int hp = world.enemyHpBase + wave_ * 10;
-
-	std::vector<Vector2> spawnPoints = {
-		{ 900.0f,  500.0f},
-        {-400.0f,  300.0f},
-        { 200.0f, -500.0f},
-        { 700.0f, -300.0f},
-        {-600.0f, -200.0f},
-        { 400.0f,  600.0f},
-        {-200.0f,  600.0f},
-        { 800.0f,    0.0f},
-        {   0.0f, -700.0f},
-        {-700.0f,  400.0f},
-	};
-
-	for (int i = 0; i < count; i++)
-	{
-		Vector2 pos = spawnPoints[i % spawnPoints.size()];
-
-		Enemy e;
-
-		switch (currentWorld_)
-		{
-			case 0:
-				e = MakeBasicEnemy(pos, speed, hp);
-				break;
-			
-			case 1:
-				e = (i % 2 == 0) ? MakeBasicEnemy(pos, speed, hp) : MakeFastEnemy(pos, speed, hp);
-				break;
-
-			case 2:
-				if (i % 3 == 0) 
-					e = MakeTankEnemy(pos, speed, hp);
-				else if (i % 3 == 1)
-					e = MakeFastEnemy(pos, speed, hp);
-				else
-					e = MakeBasicEnemy(pos, speed, hp);
-				break;
-
-			default:
-				e = (i % 2 == 0) ? MakeTankEnemy(pos, speed, hp) : MakeFastEnemy(pos, speed, hp);
-				break;
-		}
-
-		e.sprite = &texEnemy_;
-		enemies_.push_back(e);
-	}
+	if (currentMission_ >= (int)world.missions.size())
+	return;
+	
+	const MissionConfig& cfg = world.missions[currentMission_];
+	
+	enemies_ = cfg.enemies;
+	
+	for (Enemy& e : enemies_)
+	e.sprite = &texEnemy_;
+	
+	activeMission_.Start(cfg);
+	
+	playerBullets_.clear();
+	enemyBullets_.clear();
+	state_ = GameState::Playing;
 }
 
 void Game::Reset()
@@ -304,14 +267,14 @@ void Game::Reset()
 	playerBullets_.clear();
 	enemyBullets_.clear();
 	currentWeapon_ = 0;
-	wave_ = 1;
+	currentMission_ = 0;
 	score_ = 0;
 	worldScore_ = 0;
 	currentWorld_ = 0;
 	state_ = GameState::Playing;
 
 	AdvanceWorld();
-	SpawnWave();
+	StartMission();
 }
 
 void Game::Run()
@@ -360,38 +323,59 @@ void Game::Run()
 		Weapon({"Deletifier", 1000.0f, 0.0f, 5.0f, 10.0f, 1, 0.0f, 1000}),
 	};
 
+	auto makeEnemies = [&](int count, std::function<Enemy(Vector2, float, int)> makeFunc, float speedMult, int hp)
+	{
+		std::vector<Enemy> out;
+		std::vector<Vector2> spawnPts = {
+			{900,500},{-400,300},{200,-500},{700,-300},
+			{-600,-200},{400,600},{-200,600},{800,0}
+		};
+		for (int i = 0; i < count; i++)
+			out.push_back(makeFunc(spawnPts[i % spawnPts.size()], speedMult * 80.0f, hp));
+		return out;
+	};
+
 	worlds_ = {
-		WorldConfig{
-			/*name*/"SEC 1",
-			/*bgTexture*/"assets/sprites/lvl1bg.png",
-			/*maxWaves*/3,
-			/*enemySpeedMult*/1.0f,
-			/*enemyHpBase*/80,
-			/*walls*/{ {100, 200, 300, 30}, {500, 120, 40, 220} }
-		},
-		WorldConfig{
-			/*name*/"SEC 2",
-			/*bgTexture*/"assets/sprites/lvl2bg.png",
-			/*maxWaves*/6,
-			/*enemySpeedMult*/1.25f,
-			/*enemyHpBase*/100,
-			/*walls*/{ {-300, 100, 40, 300}, {200, -200, 250, 30}, {400, 300, 30, 200} }
-		},
-		WorldConfig{
-			/*name*/"SEC 3",
-			/*bgTexture*/"assets/sprites/lvl3bg.png",
-			/*maxWaves*/10,
-			/*enemySpeedMult*/1.5f,
-			/*enemyHpBase*/130,
-			/*walls*/{ {0, 300, 500, 20}, {-400, -100, 30, 400}, {300, -300, 200, 30} }
-		},
-		WorldConfig{
-			/*name*/"SEC 4",
-			/*bgTexture*/"assets/sprites/lvl4bg.png",
-			/*maxWaves*/15,
-			/*enemySpeedMult*/1.75f,
-			/*enemyHpBase*/170,
-			/*walls*/{ {-200, 200, 400, 25}, {200, -200, 25, 400}, {-300, -300, 300, 25} }
+		WorldConfig
+		{
+			"SEC 1",
+			"assets/sprites/lvl1bg.png",
+			1.0f, 
+			80,
+			{ {100,200,300,30}, {500,120,40,220} },
+			{
+				MissionConfig
+				{
+					"Clear the Sector",
+					"Destroy all hostiles.",
+					MissionType::Exterminate,
+					makeEnemies(4, MakeBasicEnemy, 1.0f, 80)
+				},
+				MissionConfig
+				{
+					"Hold the Line",
+					"Survive the assault for 20 seconds.",
+					MissionType::Defend,
+					makeEnemies(6, MakeBasicEnemy, 1.0f, 80),
+					20.0f   // defendDuration
+				},
+				[](){
+					MissionConfig cfg;
+					cfg.title = "Eliminate the Commander";
+					cfg.description = "Take down the boss.";
+					cfg.type = MissionType::KillBoss;
+					cfg.bossIndex = 0;
+
+					// Boss
+					Enemy boss = MakeTankEnemy({500, 0}, 100.0f, 200);
+					boss.radius = 28.0f;
+					cfg.enemies.push_back(boss);
+
+					cfg.enemies.push_back(MakeBasicEnemy({-300, 200}, 100.0f, 80));
+					cfg.enemies.push_back(MakeBasicEnemy({300, -200}, 100.0f, 80));
+					return cfg;
+				}()
+			}
 		},
 	};
 
@@ -452,11 +436,11 @@ void Game::Update(float dt)
 		{
 			if (currentWorld_ < (int)worlds_.size())
 			{
-				wave_ = 1;
+				currentMission_ = 0;
 				worldScore_ = 0;
 				player_.hp += 25;
 				AdvanceWorld();
-				SpawnWave();
+				StartMission();
 				state_ = GameState::Playing;
 			}
 			else
@@ -496,27 +480,25 @@ void Game::Update(float dt)
 
 	if (state_ == GameState::BetweenWaves)
 	{
-		waveTimer_ -= dt;
-
-		if (waveTimer_ <= 0.0f)
+		missionEndTimer_ -= dt;
+		if (missionEndTimer_ <= 0)
 		{
-			wave_++;
-			
-			if (wave_ > worlds_[currentWorld_].maxWaves)
+			currentMission_++;
+			const WorldConfig& world = worlds_[currentWorld_];
+
+			if (currentMission_ >= (int)world.missions.size())
 			{
 				currentWorld_++;
 				state_ = GameState::BetweenWorlds;
 			}
 			else
 			{
-				SpawnWave();
-				state_ = GameState::Playing;
+				StartMission();
 			}
 		}
 
 		player_.Update(input_, dt, walls_);
 		camFollow_.Update(camera_, player_.Pos(), dt);
-
 		return;
 	}
 
@@ -604,16 +586,18 @@ void Game::Update(float dt)
 	score_ += kills * 100;
 	worldScore_ += kills * 100;
 
-	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), isDeadEnemy), enemies_.end());
+	activeMission_.Update(enemies_, player_.hp <= 0.f, dt);
 
-	if (enemies_.empty())
+	if (activeMission_.complete)
 	{
 		state_ = GameState::BetweenWaves;
-		waveTimer_ = kWaveDelay;
+		missionEndTimer_ = 1.3f;
 
 		playerBullets_.clear();
 		enemyBullets_.clear();
 	}
+
+	enemies_.erase(std::remove_if(enemies_.begin(), enemies_.end(), isDeadEnemy), enemies_.end());
 }
 
 Vector2 Game::GetMouseWorldPos() const
@@ -718,8 +702,14 @@ void Game::Draw()
 
 		EndMode2D();
 
-		const char* waveMsg = TextFormat("Wave: %d", wave_);
-		int waveW = MeasureText(waveMsg, 30);
+		const std::string hudMsg = activeMission_.HudText(enemies_);
+		DrawText(hudMsg.c_str(), kRenderW / 2 - MeasureText(hudMsg.c_str(), 22) / 2, 10, 22, RAYWHITE);
+
+		if (activeMission_.config)
+		{
+			const std::string& title = activeMission_.config->title;
+			DrawText(title.c_str(), 10, 10, 16, LIGHTGRAY);
+		}
 
 		DrawText(weapons_[currentWeapon_].Name().c_str(), 10, kRenderH - 50.0f, 20, RAYWHITE);
 		DrawHud();
@@ -727,16 +717,15 @@ void Game::Draw()
 		{
 			DrawText(TextFormat("Score: %d", score_), 10, 20, 20, YELLOW);
 		}
-		DrawText(waveMsg, kRenderW / 2 - waveW / 2, 10, 30, RAYWHITE);
 
 		if (state_ == GameState::BetweenWaves)
 		{
-			const char* msg = TextFormat("Wave %d Complete!", wave_);
+			const char* msg = TextFormat("Mission %s Complete!", hudMsg.c_str());
 			int textW  = MeasureText(msg, 35);
 
 			DrawText(msg, kRenderW / 2 - textW / 2, kRenderH / 2 - 40, 30, GREEN);
 
-			const char* next = TextFormat("Next Wave in %.1f...", waveTimer_);
+			const char* next = TextFormat("Next Wave in %.1f...", missionEndTimer_);
 			int nextW = MeasureText(next, 20);
 			DrawText(next, kRenderW / 2 - nextW / 2, kRenderH / 2, 20, RAYWHITE);
 		}

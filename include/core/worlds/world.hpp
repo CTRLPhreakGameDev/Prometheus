@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "core/missions/mission.hpp"
 #include <vector>
 #include <string>
 
@@ -8,8 +9,8 @@ struct WorldConfig
 {
     std::string name;
     std::string bgTexture;
-    int maxWaves;
     float enemySpeedMult;
     int enemyHpBase;
     std::vector<Rectangle> walls;
+    std::vector<MissionConfig> missions;
 };

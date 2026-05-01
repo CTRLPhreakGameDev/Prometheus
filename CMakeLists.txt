@@ -29,6 +29,7 @@ add_executable(game
   src/main.cpp
   src/core/game.cpp
   src/core/input/input.cpp
+  src/core/missions/mission.cpp
   src/gameplay/player.cpp
   src/gameplay/enemies/common.cpp
   src/gfx/cameraFollow.cpp
