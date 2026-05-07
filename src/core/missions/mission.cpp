@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iomanip>
 
-void MissionState::Update(const std::vector<Enemy>& enemies, bool playerDead, float dt)
+void MissionState::Update(const std::vector<Enemy>& enemies, bool playerDead, float dt, Vector2 playerPos)
 {
     if (complete || failed || !config)
         return;
@@ -47,6 +47,42 @@ void MissionState::Update(const std::vector<Enemy>& enemies, bool playerDead, fl
                 complete = true;
             break;
         }
+
+        case MissionType::Reach:
+        {
+            if (!objective) break;
+            float dx = playerPos.x - objective->position.x;
+            float dy = playerPos.y - objective->position.y;
+            float dist = sqrtf(dx*dx + dy*dy);
+            if (dist <= objective->radius)
+                complete;
+            break;
+        }
+
+        case MissionType::DefendPoint:
+        {
+            if (!objective || !objective->active)
+            {
+                failed = true;
+                break;
+            }
+            if (playerDead)
+            {
+                failed = true;
+                break;
+            }
+            defendTimer += dt;
+            if (defendTimer >= config->defendDuration)
+                complete = true;
+            break;
+        }
+
+        case MissionType::DestroyTarget:
+        {
+            if (objective && !objective->active)
+                complete = true;
+            break;
+        }
     }
 }
 
@@ -71,6 +107,24 @@ std::string MissionState::HudText(const std::vector<Enemy>& enemies) const
             std::ostringstream ss;
             ss << "Survive: " << std::fixed << std::setprecision(1) << remaining << "s";
             return ss.str();
+        }
+
+        case MissionType::Reach:
+        {
+            return "Reach the objective!";
+        }
+
+        case MissionType::DefendPoint:
+        {
+            float remaining = config->defendDuration - defendTimer;
+            std::ostringstream ss;
+            ss << "Defend! " << std::fixed << std::setprecision(1) << remaining << "s";
+            return ss.str();
+        }
+
+        case MissionType::DestroyTarget:
+        {
+            return "Destroy the target!";
         }
     }
     return "";

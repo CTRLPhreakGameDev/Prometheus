@@ -121,7 +121,7 @@ void Game::DrawMainMenu()
 
 	const char* title = "OPERATION PROMETHEUS";
 	int titleW = MeasureText(title, 55);
-	DrawText(title, kRenderW / 2 - titleW / 2, 60, 55, RAYWHITE);
+	DrawText(title, kRenderW / 2 - titleW / 2, 10, 55, RAYWHITE);
 
 	Rectangle playRect = { 300, 180, 200, 36 };
 	Rectangle optionsRect = { 300, 230, 200, 36 };
@@ -344,6 +344,16 @@ void Game::Run()
 			80,
 			{ {100,200,300,30}, {500,120,40,220} },
 			{
+				MissionConfig
+				{
+					"Reach the Bacon",
+					"Navigate to the signal source.",
+					MissionType::Reach,
+					{},
+					0.0f,
+					-1,
+					ObjectivePoint{ {-20.0f, -20.0f}, 50.0f, -1, -1, ObjType::Reach }
+				},
 				MissionConfig
 				{
 					"Clear the Sector",
@@ -586,7 +596,7 @@ void Game::Update(float dt)
 	score_ += kills * 100;
 	worldScore_ += kills * 100;
 
-	activeMission_.Update(enemies_, player_.hp <= 0.f, dt);
+	activeMission_.Update(enemies_, player_.hp <= 0.f, dt, player_.Pos());
 
 	if (activeMission_.complete)
 	{
@@ -678,6 +688,26 @@ void Game::Draw()
 		Rectangle dst = { mouseWorld.x, mouseWorld.y, size, size };
 		Vector2 origin = { size / 2.0f, size / 2.0f };
 		DrawTexturePro(texHair_, src, dst, origin, 0.0f, WHITE);
+
+		if (activeMission_.objective && activeMission_.objective->active)
+		{
+			const ObjectivePoint& obj = *activeMission_.objective;
+
+			if (obj.sprite)
+			{
+				float size = obj.radius * 2.0f;
+				Rectangle src = { 0, 0, (float)obj.sprite->width, (float)obj.sprite->height };
+				Rectangle dst = { obj.position.x, obj.position.y, size, size };
+				Vector2 origin = { size / 2, size / 2 };
+				DrawTexturePro(*obj.sprite, src, dst, origin, 0.0f, WHITE);
+			}
+			else
+			{
+				DrawCircleV(obj.position, obj.radius, Fade(SKYBLUE, 0.3f));
+				DrawCircleLinesV(obj.position, obj.radius, SKYBLUE);
+				DrawText("OBJECTIVE", obj.position.x - 36, obj.position.y - 6, 12, WHITE);
+			}
+		}
 
 		for (const Rectangle &r : walls_) 
 		{

@@ -1,16 +1,21 @@
 #pragma once
 
 #include "gameplay/enemies/common.hpp"
+#include "core/objectives/objective.hpp"
 #include "raylib.h"
 #include <vector>
 #include <string>
 #include <functional>
+#include <optional>
 
 enum class MissionType
 {
     Exterminate,
     KillBoss,
     Defend,
+    DefendPoint,
+    DestroyTarget,
+    Reach,
 };
 
 struct MissionConfig
@@ -24,6 +29,8 @@ struct MissionConfig
     float defendDuration = 0.0f;
 
     int bossIndex = -1;
+
+    std::optional<ObjectivePoint> objective;
 };
 
 struct MissionState
@@ -34,6 +41,7 @@ struct MissionState
     bool complete = false;
     bool failed = false;
     bool hasHadEnemies = false;
+    std::optional<ObjectivePoint> objective;
 
     void Start(const MissionConfig& cfg)
     {
@@ -42,9 +50,10 @@ struct MissionState
         complete = false;
         failed = false;
         hasHadEnemies = false;
+        objective = cfg.objective;
     }
 
-    void Update(const std::vector<Enemy>& enemies, bool playerDead, float dt);
+    void Update(const std::vector<Enemy>& enemies, bool playerDead, float dt, Vector2 plaerPos = {0,0});
 
     std::string HudText(const std::vector<Enemy>& enemies) const;
 };
