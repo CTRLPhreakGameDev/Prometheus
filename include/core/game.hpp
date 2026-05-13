@@ -97,6 +97,7 @@ class Game
 		Texture2D texFredrick_{};
 		Texture2D texHair_{};
 		Texture2D texBg_{};
+		Texture2D texWalternator_{};
 		float playerAngle_ = 0.0f;
 		float walterAngle_ = 0.0f;
 

@@ -298,16 +298,19 @@ void Game::Run()
 	texBullet_ = LoadTexture("assets/sprites/bullet.png");
 	texFredrick_ = LoadTexture("assets/sprites/fredrick.png");
 	texHair_ = LoadTexture("assets/sprites/crosshair.png");
+	texWalternator_ = LoadTexture("assets/sprites/walternator9000.png");
 
-	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load enemy sprite");
-	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullet sprite");
+	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load Walter");
+	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullot");
 	if (texFredrick_.width == 0) TraceLog(LOG_WARNING, "Failed to load Fredrick");
 	if (texHair_.width == 0) TraceLog(LOG_WARNING, "Failed to load the hair");
+	if (texWalternator_.width == 0) TraceLog(LOG_WARNING, "Failed to load Big Walter");
 
 	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texFredrick_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texHair_, TEXTURE_FILTER_POINT);
+	SetTextureFilter(texWalternator_, TEXTURE_FILTER_POINT); 
 
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
@@ -352,7 +355,28 @@ void Game::Run()
 					{},
 					0.0f,
 					-1,
-					ObjectivePoint{ {-20.0f, -20.0f}, 50.0f, -1, -1, ObjType::Reach }
+					ObjectivePoint{ {-100.0f, -100.0f}, 50.0f, -1, -1, ObjType::Reach }
+				},
+				MissionConfig
+				{
+					"Defend the Package",
+					"Defend the package for 10 seconds",
+					MissionType::DefendPoint,
+					makeEnemies(5, MakeBasicEnemy, 1.0f, 80),
+					20.0f,
+					-1,
+					ObjectivePoint{ {300.0f, 300.0f}, 35.0f, 200, 200, ObjType::Defend }
+				},
+				MissionConfig
+				{
+					"Destroy the Enemy Space Base",
+					"Base will spawn enemies",
+					MissionType::DestroyTarget,
+					makeEnemies(3, MakeBasicEnemy, 1.0f, 80),
+					0.0f,
+					-1,
+					ObjectivePoint{ {400.0f, 400.0f}, 200.0f, 150, 150, ObjType::Destroy, &texWalternator_ }
+
 				},
 				MissionConfig
 				{
@@ -411,6 +435,7 @@ void Game::Run()
 	UnloadTexture(texBullet_);
 	UnloadTexture(texFredrick_);
 	UnloadTexture(texHair_);
+	UnloadTexture(texWalternator_);
 	if (texBg_.width > 0)
 		UnloadTexture(texBg_);
 
@@ -585,6 +610,39 @@ void Game::Update(float dt)
 		}
 	}
 
+	if (activeMission_.objective && activeMission_.objective->active)
+	{
+		ObjectivePoint& obj = *activeMission_.objective;
+		if (obj.type == ObjType::Destroy)
+		{
+			for (Bullet& b : playerBullets_)
+			{
+				if (b.active && CheckCollisionRecs(b.Hitbox(), obj.Hitbox()))
+				{
+					b.active = false;
+					obj.hp -= weapons_[currentWeapon_].Damage();
+					if (obj.hp <= 0)
+						obj.active = false;
+				}
+			}
+		}
+
+		if (obj.type == ObjType::Defend)
+		{
+			for (Bullet& b : enemyBullets_)
+			{
+				if (b.active && CheckCollisionRecs(b.Hitbox(), obj.Hitbox()))
+				{
+					b.active = false;
+					obj.hp -= 5;
+					PlaySound(sfxHit_);
+					if (obj.hp <= 0)
+						obj.active = false;
+				}
+			}
+		}
+	}
+
 	auto isDead = [](const Bullet& b) { return !b.active; };
 
 	playerBullets_.erase(std::remove_if(playerBullets_.begin(), playerBullets_.end(), isDead), playerBullets_.end());
@@ -597,6 +655,12 @@ void Game::Update(float dt)
 	worldScore_ += kills * 100;
 
 	activeMission_.Update(enemies_, player_.hp <= 0.f, dt, player_.Pos());
+
+	if (activeMission_.failed)
+	{
+		state_ = GameState::GameOver;
+		PlaySound(sfxDeath_);
+	}
 
 	if (activeMission_.complete)
 	{
@@ -701,13 +765,34 @@ void Game::Draw()
 				Vector2 origin = { size / 2, size / 2 };
 				DrawTexturePro(*obj.sprite, src, dst, origin, 0.0f, WHITE);
 			}
+			else if (obj.type == ObjType::Defend && obj.sprite)
+			{
+				DrawCircleV(obj.position, obj.radius, Fade(GREEN, 0.2f));
+				DrawCircleLinesV(obj.position, obj.radius, GREEN);
+				DrawText("DEFEND", (int)obj.position.x - 24, (int)obj.position.y - 6, 12, WHITE);
+			}
 			else
 			{
 				DrawCircleV(obj.position, obj.radius, Fade(SKYBLUE, 0.3f));
 				DrawCircleLinesV(obj.position, obj.radius, SKYBLUE);
 				DrawText("OBJECTIVE", obj.position.x - 36, obj.position.y - 6, 12, WHITE);
 			}
+
+			if (obj.maxHp > 0)
+			{
+				float barW = obj.radius * 2.0f;
+				float barH = 6.0f;
+				float barX = obj.position.x - obj.radius;
+				float barY = obj.position.y + obj.radius - 70.0f;
+				float ratio = (float)obj.hp / (float)obj.maxHp;
+
+				DrawRectangle((int)barX,  (int)barY, (int)barW, (int)barH, DARKGRAY);
+				DrawRectangle((int)barX,  (int)barY, (int)barW * ratio, (int)barH, obj.type == ObjType::Defend ? GREEN : RED);
+				DrawRectangleLinesEx({barX, barY, barW, barH}, 1, RAYWHITE);
+			}
 		}
+
+
 
 		for (const Rectangle &r : walls_) 
 		{

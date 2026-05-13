@@ -55,7 +55,7 @@ void MissionState::Update(const std::vector<Enemy>& enemies, bool playerDead, fl
             float dy = playerPos.y - objective->position.y;
             float dist = sqrtf(dx*dx + dy*dy);
             if (dist <= objective->radius)
-                complete;
+                complete = true;
             break;
         }
 
