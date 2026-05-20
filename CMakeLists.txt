@@ -32,9 +32,10 @@ add_executable(game
   src/core/missions/mission.cpp
   src/gameplay/player.cpp
   src/gameplay/enemies/common.cpp
-  src/gfx/cameraFollow.cpp
   src/gameplay/bullet/bullet.cpp
   src/gameplay/weapon/weapon.cpp
+  src/gfx/cameraFollow.cpp
+  src/gfx/objectiveIndicator.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

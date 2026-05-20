@@ -299,18 +299,21 @@ void Game::Run()
 	texFredrick_ = LoadTexture("assets/sprites/fredrick.png");
 	texHair_ = LoadTexture("assets/sprites/crosshair.png");
 	texWalternator_ = LoadTexture("assets/sprites/walternator9000.png");
+	texMoe_ = LoadTexture("assets/sprites/comms.png");
 
 	if (texEnemy_.width == 0) TraceLog(LOG_WARNING, "Failed to load Walter");
 	if (texBullet_.width == 0) TraceLog(LOG_WARNING, "Failed to load bullot");
 	if (texFredrick_.width == 0) TraceLog(LOG_WARNING, "Failed to load Fredrick");
 	if (texHair_.width == 0) TraceLog(LOG_WARNING, "Failed to load the hair");
 	if (texWalternator_.width == 0) TraceLog(LOG_WARNING, "Failed to load Big Walter");
+	if (texMoe_.width == 0) TraceLog(LOG_WARNING, "Failed to load Moe");
 
 	SetTextureFilter(texEnemy_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texBullet_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texFredrick_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texHair_, TEXTURE_FILTER_POINT);
 	SetTextureFilter(texWalternator_, TEXTURE_FILTER_POINT); 
+	SetTextureFilter(texMoe_, TEXTURE_FILTER_POINT);
 
 	target_ = LoadRenderTexture(kRenderW, kRenderH);
 	SetTextureFilter(target_.texture, TEXTURE_FILTER_POINT);
@@ -365,7 +368,7 @@ void Game::Run()
 					makeEnemies(5, MakeBasicEnemy, 1.0f, 80),
 					20.0f,
 					-1,
-					ObjectivePoint{ {300.0f, 300.0f}, 35.0f, 200, 200, ObjType::Defend }
+					ObjectivePoint{ {300.0f, 300.0f}, 150.0f, 200, 200, ObjType::Defend, &texMoe_ }
 				},
 				MissionConfig
 				{
@@ -375,7 +378,7 @@ void Game::Run()
 					makeEnemies(3, MakeBasicEnemy, 1.0f, 80),
 					0.0f,
 					-1,
-					ObjectivePoint{ {400.0f, 400.0f}, 200.0f, 150, 150, ObjType::Destroy, &texWalternator_ }
+					ObjectivePoint{ {400.0f, 400.0f}, 200.0f, 300, 300, ObjType::Destroy, &texWalternator_ }
 
 				},
 				MissionConfig
@@ -436,6 +439,7 @@ void Game::Run()
 	UnloadTexture(texFredrick_);
 	UnloadTexture(texHair_);
 	UnloadTexture(texWalternator_);
+	UnloadTexture(texMoe_);
 	if (texBg_.width > 0)
 		UnloadTexture(texBg_);
 
@@ -539,6 +543,12 @@ void Game::Update(float dt)
 
 	player_.Update(input_, dt, walls_);
 	camFollow_.Update(camera_, player_.Pos(), dt);
+
+	if (input_.Secret())
+	{
+		player_.hp = player_.maxHp;
+		TraceLog(LOG_DEBUG, "konami");
+	}
 
 	if (player_.hp <= 0)
 	{
@@ -831,6 +841,11 @@ void Game::Draw()
 		if (input_.GameInfo())
 		{
 			DrawText(TextFormat("Score: %d", score_), 10, 20, 20, YELLOW);
+		}
+
+		if (activeMission_.objective && activeMission_.objective->active)
+		{
+			objIndicator_.Draw({ kRenderW / 2.0f, kRenderH / 2.0f }, activeMission_.objective->position, camera_, kRenderW, kRenderH);
 		}
 
 		if (state_ == GameState::BetweenWaves)

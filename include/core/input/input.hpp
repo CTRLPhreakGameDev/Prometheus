@@ -16,6 +16,7 @@ public:
     bool Pause()      const { return pause_; }
     bool Quit()       const { return quit_; }
     bool Enter()      const { return enter_; }
+    bool Secret()     const { return secret_; }
 
 private:
     bool left_ = false, right_ = false, up_ = false, down_ = false;
@@ -33,4 +34,8 @@ private:
     bool quit_ = false;
 
     bool enter_ = false;
+
+    bool secret_ = false;
+    static constexpr int kKonamiLen = 10;
+    int konamiStep_ = 0;
 };

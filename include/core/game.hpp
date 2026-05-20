@@ -8,6 +8,7 @@
 #include "gameplay/enemies/common.hpp"
 #include "gameplay/player.hpp"
 #include "gfx/cameraFollow.hpp"
+#include "gfx/objectiveIndicator.hpp"
 #include "raylib.h"
 #include <vector>
 #include <array>
@@ -69,7 +70,6 @@ class Game
   		Player player_{{0.0f, 0.0f}};
 		std::vector<Enemy> enemies_;
 
-
  		std::vector<Rectangle> walls_;
 
   		std::vector<Weapon> weapons_;
@@ -88,6 +88,8 @@ class Game
 
 		static constexpr float kWaveDelay = 3.0f;
 
+		ObjectiveIndicator objIndicator_;
+
 		Sound sfxShoot_;
 		Sound sfxHit_;
 		Sound sfxDeath_;
@@ -98,6 +100,7 @@ class Game
 		Texture2D texHair_{};
 		Texture2D texBg_{};
 		Texture2D texWalternator_{};
+		Texture2D texMoe_{};
 		float playerAngle_ = 0.0f;
 		float walterAngle_ = 0.0f;
 
